@@ -819,6 +819,29 @@ public class RedisCacheUtils {
     }
 
     /**
+     * 获取有序集合元素（逆序）
+     *
+     * @param key   键
+     * @param start 开始索引
+     * @param end   结束索引
+     * @return 有序集合
+     */
+    public static List<String> zrevrange(String key, long start, long end) {
+        try {
+            if (isCluster) {
+                return jedisCluster.zrevrange(key, start, end);
+            } else {
+                try (Jedis jedis = getJedis()) {
+                    return jedis.zrevrange(key, start, end);
+                }
+            }
+        } catch (Exception e) {
+            logger.error("[Redis] zrevrange error: {}", e.getMessage(), e);
+            throw new JedisException(e);
+        }
+    }
+
+    /**
      * 获取有序集合元素分数
      * 
      * @param key    键
