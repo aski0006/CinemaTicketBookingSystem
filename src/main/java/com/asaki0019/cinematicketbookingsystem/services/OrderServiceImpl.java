@@ -32,6 +32,13 @@ public class OrderServiceImpl implements OrderService {
     @Override
     @Transactional
     public Map<String, Object> createOrder(OrderRequest orderRequest) {
+        // 参数校验
+        if (orderRequest == null || orderRequest.getUserId() == null || orderRequest.getSessionId() == null
+                || orderRequest.getSeatIds() == null || orderRequest.getSeatIds().isEmpty()
+                || orderRequest.getPaymentMethod() == null) {
+            throw new IllegalArgumentException("订单参数不合法");
+        }
+
         // 1. 验证座位是否可用并加锁
         for (Long seatId : orderRequest.getSeatIds()) {
             String lockKey = SEAT_LOCK_PREFIX + seatId;

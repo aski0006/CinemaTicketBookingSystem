@@ -98,13 +98,17 @@ public class MovieServiceImpl implements MovieService {
 
     @Override
     public Movie createMovie(Movie movie) {
-        // To be implemented for admin
+        if (!com.asaki0019.cinematicketbookingsystem.utils.ValidationUtils.validateMovie(movie)) {
+            throw new IllegalArgumentException("电影参数不合法");
+        }
         return movieRepository.save(movie);
     }
 
     @Override
     public Movie updateMovie(Long movieId, Movie movieDetails) {
-        // To be implemented for admin
+        if (!com.asaki0019.cinematicketbookingsystem.utils.ValidationUtils.validateMovie(movieDetails)) {
+            throw new IllegalArgumentException("电影参数不合法");
+        }
         Movie movie = movieRepository.findById(movieId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Movie not found"));
 

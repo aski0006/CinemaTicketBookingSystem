@@ -34,6 +34,9 @@ public class Review {
     @Column(name = "create_time")
     private LocalDateTime createTime;
 
+    @Column(name = "status")
+    private String status; // 审核状态 PENDING/APPROVED/REJECTED
+
     @PrePersist
     protected void onCreate() {
         createTime = LocalDateTime.now();

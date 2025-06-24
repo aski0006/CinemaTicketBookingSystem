@@ -19,6 +19,9 @@ public class HallServiceImpl implements HallService {
 
     @Override
     public Hall getHallById(Long id) {
+        if (id == null || id <= 0) {
+            throw new IllegalArgumentException("影厅ID参数不合法");
+        }
         return hallRepository.findById(id).orElse(null);
     }
 }

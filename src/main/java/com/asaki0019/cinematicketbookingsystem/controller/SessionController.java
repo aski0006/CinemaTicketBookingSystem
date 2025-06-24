@@ -55,10 +55,26 @@ public class SessionController {
             resp.put("error", "场次不存在");
             return resp;
         }
-        List<Seat> seats = seatService.getSeatsByHallId(session.getHallId());
+        List<com.asaki0019.cinematicketbookingsystem.entities.Seat> seats = seatService
+                .getSeatsByHallId(session.getHallId());
+        // 构造分组结构
+        Map<String, List<Map<String, Object>>> rows = new HashMap<>();
+        for (com.asaki0019.cinematicketbookingsystem.entities.Seat seat : seats) {
+            Map<String, Object> seatInfo = new HashMap<>();
+            seatInfo.put("colNo", seat.getColNo());
+            seatInfo.put("status", seat.getStatus());
+            rows.computeIfAbsent(seat.getRowNo(), k -> new java.util.ArrayList<>()).add(seatInfo);
+        }
+        List<Map<String, Object>> rowList = new java.util.ArrayList<>();
+        for (String rowNo : rows.keySet()) {
+            Map<String, Object> row = new HashMap<>();
+            row.put("rowNo", rowNo);
+            row.put("seats", rows.get(rowNo));
+            rowList.add(row);
+        }
         Map<String, Object> result = new HashMap<>();
-        result.put("session_id", sessionId);
-        result.put("seats", seats);
+        result.put("sessionId", sessionId);
+        result.put("rows", rowList);
         return result;
     }
 }

@@ -14,11 +14,17 @@ public class SeatServiceImpl implements SeatService {
 
     @Override
     public List<Seat> getSeatsByHallId(Long hallId) {
+        if (hallId == null || hallId <= 0) {
+            throw new IllegalArgumentException("影厅ID参数不合法");
+        }
         return seatRepository.findByHallId(hallId);
     }
 
     @Override
     public List<Seat> getSeatsByHallIdAndStatus(Long hallId, String status) {
+        if (hallId == null || hallId <= 0 || status == null || status.isEmpty()) {
+            throw new IllegalArgumentException("参数不合法");
+        }
         return seatRepository.findByHallIdAndStatus(hallId, status);
     }
 }
