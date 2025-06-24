@@ -1,4 +1,4 @@
-package com.asaki0019.cinematicketbookingsystem.service;
+package com.asaki0019.cinematicketbookingsystem.userServices;
 
 import com.asaki0019.cinematicketbookingsystem.entities.Movie;
 import com.asaki0019.cinematicketbookingsystem.repository.MovieRepository;
@@ -39,6 +39,12 @@ public class MovieServiceImplTest {
         movie1.setDirector("Test Director");
         movie1.setReleaseDate(LocalDate.now());
         movie1.setStatus("SHOWING");
+        movie1.setDuration(120);
+        movie1.setActors("主演A,主演B");
+        movie1.setDescription("测试电影简介");
+        movie1.setPosterUrl("http://example.com/poster.jpg");
+        movie1.setTrailerUrl("http://example.com/trailer.mp4");
+        movie1.setRating(8.5);
         movie1 = movieService.createMovie(movie1);
 
         // Clean up recommendation key before each test
@@ -75,7 +81,15 @@ public class MovieServiceImplTest {
     void testUpdateMovie() {
         Movie movieDetails = new Movie();
         movieDetails.setTitle("Updated Test Movie");
+        movieDetails.setDirector("Updated Director");
+        movieDetails.setActors("主演A,主演B");
+        movieDetails.setDuration(130);
         movieDetails.setReleaseDate(movie1.getReleaseDate());
+        movieDetails.setDescription("更新后的简介");
+        movieDetails.setPosterUrl("http://example.com/updated_poster.jpg");
+        movieDetails.setTrailerUrl("http://example.com/updated_trailer.mp4");
+        movieDetails.setRating(9.0);
+        movieDetails.setStatus("SHOWING");
         movieService.updateMovie(movie1.getId(), movieDetails);
 
         Movie updatedMovie = movieService.getMovieById(movie1.getId());

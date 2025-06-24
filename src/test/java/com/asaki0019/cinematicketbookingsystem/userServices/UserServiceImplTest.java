@@ -1,4 +1,4 @@
-package com.asaki0019.cinematicketbookingsystem.service;
+package com.asaki0019.cinematicketbookingsystem.userServices;
 
 import com.asaki0019.cinematicketbookingsystem.services.UserService;
 import com.asaki0019.cinematicketbookingsystem.repository.UserRepository;
