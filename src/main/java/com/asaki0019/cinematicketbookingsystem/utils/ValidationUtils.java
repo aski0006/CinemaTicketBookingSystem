@@ -1,6 +1,6 @@
-package com.asaki0019.utils;
+package com.asaki0019.cinematicketbookingsystem.utils;
 
-import com.asaki0019.entities.*;
+import com.asaki0019.cinematicketbookingsystem.entities.*;
 import java.util.regex.Pattern;
 
 /**

@@ -1,4 +1,4 @@
-package com.asaki0019.utils;
+package com.asaki0019.cinematicketbookingsystem.utils;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

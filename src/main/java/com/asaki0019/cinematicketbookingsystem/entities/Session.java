@@ -1,7 +1,6 @@
-package com.asaki0019.entities;
+package com.asaki0019.cinematicketbookingsystem.entities;
 
-import com.baomidou.mybatisplus.annotation.TableName;
-import com.baomidou.mybatisplus.annotation.TableField;
+import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -10,18 +9,28 @@ import java.time.LocalDateTime;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@TableName("session")
+@Entity
+@Table(name = "session")
 public class Session {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @TableField("movie_id")
+
+    @Column(name = "movie_id")
     private Long movieId;
-    @TableField("hall_id")
+
+    @Column(name = "hall_id")
     private Long hallId;
-    @TableField("start_time")
+
+    @Column(name = "start_time")
     private LocalDateTime startTime;
-    @TableField("end_time")
+
+    @Column(name = "end_time")
     private LocalDateTime endTime;
+
+    @Column(name = "price")
     private Double price;
-    @TableField("available_seats")
+
+    @Column(name = "available_seats")
     private Integer availableSeats;
 }

@@ -1,8 +1,8 @@
-package com.asaki0019.utils;
+package com.asaki0019.cinematicketbookingsystem.utils;
 
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
-import com.asaki0019.entities.User;
+import com.asaki0019.cinematicketbookingsystem.entities.User;
 
 import javax.crypto.SecretKey;
 import java.util.Date;

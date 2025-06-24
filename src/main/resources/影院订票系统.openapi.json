@@ -1,0 +1,2665 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "影院订票系统",
+    "description": "",
+    "version": "1.0.0"
+  },
+  "tags": [],
+  "paths": {
+    "/api/orders/users/{userId}": {
+      "get": {
+        "summary": "查询用户订单",
+        "deprecated": false,
+        "description": "",
+        "tags": [],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "description": "用户ID  ",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "description": "订单状态过滤  ",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "integer"
+                      },
+                      "order_no": {
+                        "type": "string"
+                      },
+                      "movie_title": {
+                        "type": "string"
+                      },
+                      "session_time": {
+                        "type": "string"
+                      },
+                      "seat_count": {
+                        "type": "integer"
+                      },
+                      "total_amount": {
+                        "type": "number"
+                      },
+                      "status": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                },
+                "example": [
+                  {
+                    "id": "Long",
+                    "order_no": "String",
+                    "movie_title": "String, 电影名称",
+                    "session_time": "DateTime, 场次时间",
+                    "seat_count": "Integer, 座位数",
+                    "total_amount": "Double",
+                    "status": "String"
+                  }
+                ]
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": []
+      }
+    },
+    "/api/orders/{orderId}/cancel": {
+      "put": {
+        "summary": "取消用户订单",
+        "deprecated": false,
+        "description": "",
+        "tags": [],
+        "parameters": [
+          {
+            "name": "orderId",
+            "in": "path",
+            "description": "订单ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "order_id": {
+                      "type": "integer"
+                    },
+                    "new_status": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "order_id",
+                    "new_status"
+                  ]
+                },
+                "example": {
+                  "order_id": "Long",
+                  "new_status": "String, 更新后状态"
+                }
+              }
+            },
+            "headers": {}
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {}
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": []
+      }
+    },
+    "/api/reviews": {
+      "post": {
+        "summary": "订单评价（电影评价）",
+        "deprecated": false,
+        "description": "",
+        "tags": [],
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "user_id": {
+                    "type": "string"
+                  },
+                  "movie_id": {
+                    "type": "string"
+                  },
+                  "rating": {
+                    "type": "string"
+                  },
+                  "content": {
+                    "type": "string"
+                  },
+                  "images": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "required": [
+                  "user_id",
+                  "movie_id",
+                  "rating",
+                  "content",
+                  "images"
+                ]
+              },
+              "example": {
+                "user_id": "Long, 必填, 用户ID",
+                "movie_id": "Long, 必填, 电影ID",
+                "rating": "Integer, 必填, 评分(1-5)",
+                "content": "String, 选填, 评价内容"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "create_time": {
+                      "type": "string"
+                    },
+                    "images": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "create_time",
+                    "images"
+                  ]
+                },
+                "example": {
+                  "id": "Long",
+                  "create_time": "DateTime",
+                  "images": [
+                    "https://example.com/image1.jpg",
+                    "https://example.com/image2.jpg"
+                  ]
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": []
+      }
+    },
+    "/api/sessions": {
+      "get": {
+        "summary": "查询电影场次",
+        "deprecated": false,
+        "description": "",
+        "tags": [],
+        "parameters": [
+          {
+            "name": "movieId",
+            "in": "query",
+            "description": "电影ID  ",
+            "required": false,
+            "example": 0,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "date",
+            "in": "query",
+            "description": "场次日期(格式yyyy-MM-dd)  ",
+            "required": false,
+            "example": "",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "integer"
+                      },
+                      "start_time": {
+                        "type": "string"
+                      },
+                      "end_time": {
+                        "type": "string"
+                      },
+                      "price": {
+                        "type": "number"
+                      },
+                      "hall": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "integer"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "type": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "name",
+                          "type"
+                        ]
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "id": "Long, 场次ID",
+                  "start_time": "DateTime, 开场时间",
+                  "end_time": "DateTime, 结束时间",
+                  "price": "Double, 基础价格",
+                  "hall": {
+                    "id": "Long, 影厅ID",
+                    "name": "String, 影厅名称",
+                    "type": "String, 影厅类型"
+                  }
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": []
+      }
+    },
+    "/api/sessions/{sessionId}/seats": {
+      "get": {
+        "summary": "获取场次座位图",
+        "deprecated": false,
+        "description": "",
+        "tags": [],
+        "parameters": [
+          {
+            "name": "sessionId",
+            "in": "path",
+            "description": "场次ID",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "session_id": {
+                      "type": "integer"
+                    },
+                    "seats": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "integer"
+                          },
+                          "row_no": {
+                            "type": "string"
+                          },
+                          "col_no": {
+                            "type": "integer"
+                          },
+                          "type": {
+                            "type": "string"
+                          },
+                          "price_factor": {
+                            "type": "number"
+                          },
+                          "status": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "required": [
+                    "session_id",
+                    "seats"
+                  ]
+                },
+                "example": {
+                  "session_id": "Long",
+                  "seats": [
+                    {
+                      "id": "Long, 座位ID",
+                      "row_no": "String, 行号",
+                      "col_no": "Integer, 列号",
+                      "type": "String, 座位类型",
+                      "price_factor": "Double, 价格系数",
+                      "status": "String, 状态(AVAILABLE/LOCKED)"
+                    }
+                  ]
+                }
+              }
+            },
+            "headers": {}
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {}
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": []
+      }
+    },
+    "/api/orders": {
+      "post": {
+        "summary": "创建购票订单",
+        "deprecated": false,
+        "description": "",
+        "tags": [],
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "JWT",
+            "required": false,
+            "example": "",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "user_id": {
+                    "type": "integer"
+                  },
+                  "session_id": {
+                    "type": "integer"
+                  },
+                  "seat_ids": {
+                    "type": "array",
+                    "items": {
+                      "type": "integer"
+                    }
+                  },
+                  "payment_method": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "user_id",
+                  "session_id",
+                  "seat_ids",
+                  "payment_method"
+                ]
+              },
+              "example": {
+                "user_id": "Long, 必填, 用户ID",
+                "session_id": "Long, 必填, 场次ID",
+                "seat_ids": [
+                  "Long, 必填, 座位ID数组"
+                ],
+                "payment_method": "String, 必填, 支付方式"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "integer"
+                    },
+                    "order_no": {
+                      "type": "string"
+                    },
+                    "total_amount": {
+                      "type": "number"
+                    },
+                    "e_ticket_url": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "order_no",
+                    "total_amount",
+                    "e_ticket_url"
+                  ]
+                },
+                "example": {
+                  "id": "Long",
+                  "order_no": "String, 订单号",
+                  "total_amount": "Double, 总金额",
+                  "e_ticket_url": "String, 电子票URL"
+                }
+              }
+            },
+            "headers": {}
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "errorCode": {
+                      "type": "string"
+                    },
+                    "errorMessage": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "errorCode",
+                    "errorMessage"
+                  ]
+                },
+                "example": {
+                  "errorCode": "SEAT_UNAVAILABLE",
+                  "errorMessage": "座位已被锁定"
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": []
+      }
+    },
+    "/api/payments/callback": {
+      "get": {
+        "summary": "支付回调",
+        "deprecated": false,
+        "description": "",
+        "tags": [],
+        "parameters": [
+          {
+            "name": "X-Signature",
+            "in": "header",
+            "description": "支付平台签名（防篡改）",
+            "required": false,
+            "example": "",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "order_no": {
+                    "type": "string"
+                  },
+                  "payment_status": {
+                    "type": "string"
+                  },
+                  "transaction_id": {
+                    "type": "string"
+                  },
+                  "amount": {
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "order_no",
+                  "payment_status",
+                  "transaction_id",
+                  "amount"
+                ]
+              },
+              "example": {
+                "order_no": "String, 原订单号",
+                "payment_status": "ENUM(SUCCESS, FAILED, TIMEOUT)",
+                "transaction_id": "String, 第三方交易ID",
+                "amount": "Decimal, 实际支付金额"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {}
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": []
+      }
+    },
+    "/api/orders/{orderId}/payment-status": {
+      "get": {
+        "summary": "支付状态查询",
+        "deprecated": false,
+        "description": "",
+        "tags": [],
+        "parameters": [
+          {
+            "name": "orderId",
+            "in": "path",
+            "description": "",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "order_no": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string"
+                    },
+                    "last_update": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "order_no",
+                    "status",
+                    "last_update"
+                  ]
+                },
+                "example": {
+                  "order_no": "String",
+                  "status": "ENUM(PENDING, SUCCESS, FAILED)",
+                  "last_update": "DateTime"
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": []
+      }
+    },
+    "/api/movies/search": {
+      "get": {
+        "summary": "搜索电影",
+        "deprecated": false,
+        "description": "",
+        "tags": [],
+        "parameters": [
+          {
+            "name": "keyword",
+            "in": "query",
+            "description": "搜索关键词(默认为空)",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "页码(默认1)",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "每页数量(默认10) ",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "total": {
+                      "type": "string"
+                    },
+                    "movies": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "title": {
+                            "type": "string"
+                          },
+                          "poster_url": {
+                            "type": "string"
+                          },
+                          "rating": {
+                            "type": "number"
+                          },
+                          "status": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "status"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "total",
+                    "movies"
+                  ]
+                },
+                "example": {
+                  "total": "Integer, 总数",
+                  "movies": [
+                    {
+                      "id": "Long, 电影ID",
+                      "title": "String, 电影标题",
+                      "poster_url": "String, 海报URL",
+                      "rating": "Double, 评分",
+                      "status": "UPCOMING"
+                    }
+                  ]
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": []
+      }
+    },
+    "/api/movies/{movieId}": {
+      "get": {
+        "summary": "获取电影详情",
+        "deprecated": false,
+        "description": "",
+        "tags": [],
+        "parameters": [
+          {
+            "name": "movieId",
+            "in": "path",
+            "description": "电影ID  ",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "number"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "director": {
+                      "type": "string"
+                    },
+                    "actors": {
+                      "type": "string"
+                    },
+                    "duration": {
+                      "type": "integer"
+                    },
+                    "release_date": {
+                      "type": "string"
+                    },
+                    "description": {
+                      "type": "string"
+                    },
+                    "poster_url": {
+                      "type": "string"
+                    },
+                    "trailer_url": {
+                      "type": "string"
+                    },
+                    "rating": {
+                      "type": "number"
+                    },
+                    "status": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "title",
+                    "director",
+                    "actors",
+                    "duration",
+                    "release_date",
+                    "description",
+                    "poster_url",
+                    "trailer_url",
+                    "rating",
+                    "status"
+                  ]
+                },
+                "example": {
+                  "id": "Long",
+                  "title": "String",
+                  "director": "String",
+                  "actors": "String",
+                  "duration": "Integer",
+                  "release_date": "Date",
+                  "description": "String",
+                  "poster_url": "String",
+                  "trailer_url": "String",
+                  "rating": "Double",
+                  "status": "String"
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": []
+      }
+    },
+    "/api/movies/recommendations": {
+      "get": {
+        "summary": "个性化推荐",
+        "deprecated": false,
+        "description": "",
+        "tags": [],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "integer"
+                      },
+                      "title": {
+                        "type": "string"
+                      },
+                      "poster_url": {
+                        "type": "string"
+                      },
+                      "match_score": {
+                        "type": "number"
+                      }
+                    }
+                  }
+                },
+                "example": [
+                  {
+                    "id": "Long, 电影ID",
+                    "title": "String, 电影标题",
+                    "poster_url": "String, 海报URL",
+                    "match_score": "Double, 推荐匹配度(0-1)"
+                  }
+                ]
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": []
+      }
+    },
+    "/api/users/register": {
+      "post": {
+        "summary": "用户注册 ",
+        "deprecated": false,
+        "description": "",
+        "tags": [],
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "username": {
+                    "type": "string"
+                  },
+                  "password": {
+                    "type": "string"
+                  },
+                  "phone": {
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "username",
+                  "password",
+                  "phone",
+                  "email"
+                ]
+              },
+              "example": {
+                "username": "",
+                "password": "",
+                "phone": "",
+                "email": ""
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "create_time": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "create_time"
+                  ]
+                },
+                "example": {
+                  "id": "Long, 用户ID",
+                  "create_time": "DateTime, 注册时间"
+                }
+              }
+            },
+            "headers": {}
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {}
+                }
+              }
+            },
+            "headers": {}
+          },
+          "409": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {}
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": []
+      }
+    },
+    "/api/users/login": {
+      "post": {
+        "summary": "登录",
+        "deprecated": false,
+        "description": "",
+        "tags": [],
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "identifier": {
+                    "type": "string"
+                  },
+                  "password": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "identifier",
+                  "password"
+                ]
+              },
+              "example": {
+                "identifier": "String, 必填, 用户名/手机/邮箱",
+                "password": "String, 必填, 密码"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "token": {
+                      "type": "string"
+                    },
+                    "user": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "member_level": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "member_level"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "token",
+                    "user"
+                  ]
+                },
+                "example": {
+                  "token": "String, JWT令牌",
+                  "user": {
+                    "id": "Long, 用户ID",
+                    "member_level": "Integer, 会员等级"
+                  }
+                }
+              }
+            },
+            "headers": {}
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {}
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": []
+      }
+    },
+    "/api/users/{userId}": {
+      "put": {
+        "summary": "修改个人信息",
+        "deprecated": false,
+        "description": "",
+        "tags": [],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "description": "",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "phone": {
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string"
+                  },
+                  "avatar": {
+                    "type": "string"
+                  }
+                }
+              },
+              "example": {
+                "phone": "String, 选填, 新手机号",
+                "email": "String, 选填, 新邮箱",
+                "avatar": "String, 选填, 新头像URL"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "update_time": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "update_time"
+                  ]
+                },
+                "example": {
+                  "id": "Long, 用户ID",
+                  "update_time": "DateTime, 更新时间"
+                }
+              }
+            },
+            "headers": {}
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {}
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": []
+      }
+    },
+    "/admin/users": {
+      "get": {
+        "summary": "查询用户列表",
+        "deprecated": false,
+        "description": "获取系统用户列表，支持分页和状态过滤",
+        "tags": [],
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "description": "账户状态过滤(ACTIVE/INACTIVE/LOCKED)",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 10
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "用户列表",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "total": {
+                      "type": "integer",
+                      "description": "总用户数"
+                    },
+                    "users": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/User"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "headers": {}
+          },
+          "403": {
+            "description": "权限不足",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": []
+      },
+      "post": {
+        "summary": "创建用户",
+        "deprecated": false,
+        "description": "管理员手动创建用户账户",
+        "tags": [],
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateUserRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "用户创建成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            },
+            "headers": {}
+          },
+          "400": {
+            "description": "参数校验失败",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": []
+      }
+    },
+    "/admin/users/{userId}": {
+      "put": {
+        "summary": "更新用户信息",
+        "deprecated": false,
+        "description": "修改用户基本信息或账户状态",
+        "tags": [],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "description": "",
+            "required": true,
+            "example": 0,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateUserRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "更新成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            },
+            "headers": {}
+          },
+          "404": {
+            "description": "用户不存在",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": []
+      },
+      "delete": {
+        "summary": "删除用户账户",
+        "deprecated": false,
+        "description": "永久删除用户账户及相关数据",
+        "tags": [],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "description": "",
+            "required": true,
+            "example": 0,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "删除成功",
+            "headers": {}
+          },
+          "404": {
+            "description": "用户不存在",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": []
+      }
+    },
+    "/admin/users/{userId}/lock": {
+      "post": {
+        "summary": "锁定用户账户",
+        "deprecated": false,
+        "description": "锁定违规用户账户",
+        "tags": [],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "description": "",
+            "required": true,
+            "example": 0,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "reason": {
+                    "type": "string",
+                    "description": "锁定原因"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "锁定成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": []
+      }
+    },
+    "/admin/movies": {
+      "post": {
+        "summary": "创建电影信息",
+        "deprecated": false,
+        "description": "添加新上映电影信息",
+        "tags": [],
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Movie"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "电影创建成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Movie"
+                }
+              }
+            },
+            "headers": {}
+          },
+          "409": {
+            "description": "电影已存在",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": []
+      }
+    },
+    "/admin/movies/{movieId}": {
+      "put": {
+        "summary": "更新电影信息",
+        "deprecated": false,
+        "description": "修改电影基本信息或状态",
+        "tags": [],
+        "parameters": [
+          {
+            "name": "movieId",
+            "in": "path",
+            "description": "",
+            "required": true,
+            "example": 0,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {}
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "更新成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Movie"
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": []
+      },
+      "delete": {
+        "summary": "下架电影",
+        "deprecated": false,
+        "description": "将电影状态设置为下架",
+        "tags": [],
+        "parameters": [
+          {
+            "name": "movieId",
+            "in": "path",
+            "description": "",
+            "required": true,
+            "example": 0,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "下架成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Movie"
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": []
+      }
+    },
+    "/admin/reviews": {
+      "get": {
+        "summary": "审核用户评价",
+        "deprecated": false,
+        "description": "获取待审核的用户评价列表",
+        "tags": [],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "评价列表",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Review"
+                  }
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": []
+      }
+    },
+    "/admin/reviews/{reviewId}/approve": {
+      "post": {
+        "summary": "通过评价审核",
+        "deprecated": false,
+        "description": "审核通过用户评价",
+        "tags": [],
+        "parameters": [
+          {
+            "name": "reviewId",
+            "in": "path",
+            "description": "",
+            "required": true,
+            "example": 0,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "审核通过",
+            "headers": {}
+          }
+        },
+        "security": []
+      }
+    },
+    "/admin/reviews/{reviewId}/reject": {
+      "post": {
+        "summary": "拒绝评价审核",
+        "deprecated": false,
+        "description": "拒绝通过用户评价",
+        "tags": [],
+        "parameters": [
+          {
+            "name": "reviewId",
+            "in": "path",
+            "description": "",
+            "required": true,
+            "example": 0,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "reason": {
+                    "type": "string",
+                    "description": "拒绝原因"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "审核拒绝",
+            "headers": {}
+          }
+        },
+        "security": []
+      }
+    },
+    "/admin/sessions": {
+      "post": {
+        "summary": "创建放映场次",
+        "deprecated": false,
+        "description": "为指定电影创建新场次",
+        "tags": [],
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSessionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "场次创建成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Session"
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": []
+      }
+    },
+    "/admin/sessions/{sessionId}": {
+      "put": {
+        "summary": "调整场次信息",
+        "deprecated": false,
+        "description": "修改场次时间、影厅或票价",
+        "tags": [],
+        "parameters": [
+          {
+            "name": "sessionId",
+            "in": "path",
+            "description": "",
+            "required": true,
+            "example": 0,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateSessionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "更新成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Session"
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": []
+      },
+      "delete": {
+        "summary": "取消场次",
+        "deprecated": false,
+        "description": "取消指定场次并通知相关用户",
+        "tags": [],
+        "parameters": [
+          {
+            "name": "sessionId",
+            "in": "path",
+            "description": "",
+            "required": true,
+            "example": 0,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "取消成功",
+            "headers": {}
+          }
+        },
+        "security": []
+      }
+    },
+    "/admin/sessions/{sessionId}/seats": {
+      "get": {
+        "summary": "监控场次售票情况",
+        "deprecated": false,
+        "description": "获取场次座位销售状态",
+        "tags": [],
+        "parameters": [
+          {
+            "name": "sessionId",
+            "in": "path",
+            "description": "",
+            "required": true,
+            "example": 0,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "座位状态图",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SeatMapResponse"
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": []
+      }
+    },
+    "/admin/orders": {
+      "get": {
+        "summary": "查询订单列表",
+        "deprecated": false,
+        "description": "获取系统订单列表，支持状态过滤",
+        "tags": [],
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "description": "订单状态过滤",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "startDate",
+            "in": "query",
+            "description": "",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "endDate",
+            "in": "query",
+            "description": "",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "订单列表",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Order"
+                  }
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": []
+      }
+    },
+    "/admin/orders/{orderId}/refund": {
+      "post": {
+        "summary": "处理订单退款",
+        "deprecated": false,
+        "description": "审核并执行订单退款",
+        "tags": [],
+        "parameters": [
+          {
+            "name": "orderId",
+            "in": "path",
+            "description": "",
+            "required": true,
+            "example": 0,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "refundAmount": {
+                    "type": "number",
+                    "description": "实际退款金额"
+                  },
+                  "reason": {
+                    "type": "string",
+                    "description": "退款原因"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "退款成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Order"
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": []
+      }
+    },
+    "/admin/statistics/daily": {
+      "get": {
+        "summary": "每日票房统计",
+        "deprecated": false,
+        "description": "获取指定日期范围的票房数据",
+        "tags": [],
+        "parameters": [
+          {
+            "name": "startDate",
+            "in": "query",
+            "description": "",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "endDate",
+            "in": "query",
+            "description": "",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "统计数据",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DailyStatistics"
+                  }
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": []
+      }
+    },
+    "/admin/statistics/movies": {
+      "get": {
+        "summary": "电影热度分析",
+        "deprecated": false,
+        "description": "获取电影销售数据排行",
+        "tags": [],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "电影热度列表",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MovieStatistics"
+                  }
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": []
+      }
+    },
+    "/admin/statistics/reports": {
+      "post": {
+        "summary": "生成业务报表",
+        "deprecated": false,
+        "description": "生成指定格式的业务报表",
+        "tags": [],
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "reportType": {
+                    "type": "string",
+                    "enum": [
+                      "PDF",
+                      "EXCEL",
+                      "CSV"
+                    ],
+                    "default": "PDF"
+                  },
+                  "dateRange": {
+                    "$ref": "#/components/schemas/DateRange"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "报表文件",
+            "content": {
+              "application/pdf": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": []
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Hall": {
+        "properties": {
+          "id": {
+            "description": "",
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 2147483647
+          },
+          "name": {
+            "description": "",
+            "type": "string",
+            "maxLength": 50
+          },
+          "type": {
+            "description": "",
+            "default": "STANDARD",
+            "type": "string",
+            "enum": [
+              "STANDARD",
+              "IMAX",
+              "DOLBY",
+              "VIP"
+            ]
+          },
+          "capacity": {
+            "description": "",
+            "type": "integer",
+            "minimum": -2147483648,
+            "maximum": 2147483647
+          },
+          "seat_layout": {
+            "description": "",
+            "type": "string",
+            "maxLength": 65535
+          },
+          "screen_type": {
+            "description": "",
+            "type": "string",
+            "maxLength": 50
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "capacity",
+          "seat_layout"
+        ]
+      },
+      "OrderSeat": {
+        "properties": {
+          "id": {
+            "description": "",
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 2147483647
+          },
+          "order_id": {
+            "description": "",
+            "type": "integer",
+            "minimum": -2147483648,
+            "maximum": 2147483647
+          },
+          "seat_id": {
+            "description": "",
+            "type": "integer",
+            "minimum": -2147483648,
+            "maximum": 2147483647
+          },
+          "final_price": {
+            "description": "",
+            "type": "number"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "order_id",
+          "seat_id",
+          "final_price"
+        ]
+      },
+      "Seat": {
+        "properties": {
+          "id": {
+            "description": "",
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 2147483647
+          },
+          "hall_id": {
+            "description": "",
+            "type": "integer",
+            "minimum": -2147483648,
+            "maximum": 2147483647
+          },
+          "row_no": {
+            "description": "",
+            "type": "string",
+            "maxLength": 2
+          },
+          "col_no": {
+            "description": "",
+            "type": "integer",
+            "minimum": -2147483648,
+            "maximum": 2147483647
+          },
+          "type": {
+            "description": "",
+            "default": "STANDARD",
+            "type": "string",
+            "enum": [
+              "STANDARD",
+              "VIP",
+              "COUPLE"
+            ]
+          },
+          "price_factor": {
+            "description": "",
+            "default": "1.00",
+            "type": "number"
+          },
+          "status": {
+            "description": "",
+            "default": "AVAILABLE",
+            "type": "string",
+            "enum": [
+              "AVAILABLE",
+              "LOCKED",
+              "OCCUPIED"
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "hall_id",
+          "row_no",
+          "col_no"
+        ]
+      },
+      "Statistics": {
+        "properties": {
+          "id": {
+            "description": "",
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 2147483647
+          },
+          "stat_date": {
+            "description": "",
+            "type": "string",
+            "format": "date"
+          },
+          "movie_id": {
+            "description": "",
+            "type": "integer",
+            "minimum": -2147483648,
+            "maximum": 2147483647
+          },
+          "session_id": {
+            "description": "",
+            "type": "integer",
+            "minimum": -2147483648,
+            "maximum": 2147483647
+          },
+          "ticket_sales": {
+            "description": "",
+            "default": "0",
+            "type": "integer",
+            "minimum": -2147483648,
+            "maximum": 2147483647
+          },
+          "revenue": {
+            "description": "",
+            "default": "0.00",
+            "type": "number"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "stat_date"
+        ]
+      },
+      "Movie": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "电影ID"
+          },
+          "title": {
+            "type": "string",
+            "description": "电影标题"
+          },
+          "director": {
+            "type": "string",
+            "description": "导演"
+          },
+          "actors": {
+            "type": "string",
+            "description": "演员列表"
+          },
+          "duration": {
+            "type": "integer",
+            "description": "时长(分钟)"
+          },
+          "release_date": {
+            "type": "string",
+            "format": "date",
+            "description": "上映日期"
+          },
+          "description": {
+            "type": "string",
+            "description": "剧情简介"
+          },
+          "poster_url": {
+            "type": "string",
+            "description": "海报URL"
+          },
+          "trailer_url": {
+            "type": "string",
+            "description": "预告片URL"
+          },
+          "rating": {
+            "type": "number",
+            "format": "float",
+            "description": "评分"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "UPCOMING",
+              "SHOWING",
+              "OFF"
+            ],
+            "description": "上映状态"
+          }
+        }
+      },
+      "CreateUserRequest": {
+        "type": "object",
+        "required": [
+          "username",
+          "password",
+          "phone"
+        ],
+        "properties": {
+          "username": {
+            "type": "string",
+            "description": "用户名（唯一）"
+          },
+          "password": {
+            "type": "string",
+            "description": "密码"
+          },
+          "phone": {
+            "type": "string",
+            "description": "手机号（唯一）"
+          },
+          "email": {
+            "type": "string",
+            "description": "邮箱"
+          },
+          "member_level": {
+            "type": "integer",
+            "description": "会员等级(0-5)",
+            "default": 0
+          }
+        }
+      },
+      "Order": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "订单ID"
+          },
+          "order_no": {
+            "type": "string",
+            "description": "订单编号"
+          },
+          "user_id": {
+            "type": "integer",
+            "description": "用户ID"
+          },
+          "session_id": {
+            "type": "integer",
+            "description": "场次ID"
+          },
+          "total_amount": {
+            "type": "number",
+            "format": "float",
+            "description": "总金额"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING_PAYMENT",
+              "COMPLETED",
+              "CANCELLED",
+              "REFUNDED"
+            ],
+            "description": "订单状态"
+          },
+          "create_time": {
+            "type": "string",
+            "format": "date-time",
+            "description": "创建时间"
+          },
+          "payment_time": {
+            "type": "string",
+            "description": "支付时间"
+          },
+          "e_ticket_url": {
+            "type": "string",
+            "description": "电子票URL\n"
+          }
+        },
+        "required": [
+          "payment_time",
+          "e_ticket_url"
+        ]
+      },
+      "UpdateUserRequest": {
+        "type": "object",
+        "properties": {
+          "phone": {
+            "type": "string",
+            "description": "新手机号"
+          },
+          "email": {
+            "type": "string",
+            "description": "新邮箱"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE",
+              "LOCKED"
+            ],
+            "description": "账户状态"
+          },
+          "member_level": {
+            "type": "integer",
+            "description": "会员等级"
+          }
+        }
+      },
+      "CreateSessionRequest": {
+        "type": "object",
+        "required": [
+          "movieId",
+          "hallId",
+          "startTime",
+          "price"
+        ],
+        "properties": {
+          "movieId": {
+            "type": "integer",
+            "description": "电影ID"
+          },
+          "hallId": {
+            "type": "integer",
+            "description": "影厅ID"
+          },
+          "startTime": {
+            "type": "string",
+            "format": "date-time",
+            "description": "开场时间"
+          },
+          "price": {
+            "type": "number",
+            "format": "float",
+            "description": "基础票价"
+          }
+        }
+      },
+      "Review": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "评价ID"
+          },
+          "user_id": {
+            "type": "integer",
+            "description": "用户ID"
+          },
+          "movie_id": {
+            "type": "integer",
+            "description": "电影ID"
+          },
+          "rating": {
+            "type": "integer",
+            "description": "评分(1-5)"
+          },
+          "content": {
+            "type": "string",
+            "description": "评价内容"
+          },
+          "images": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "评价图片URL"
+          },
+          "create_time": {
+            "type": "string",
+            "format": "date-time",
+            "description": "评价时间"
+          }
+        }
+      },
+      "UpdateSessionRequest": {
+        "type": "object",
+        "properties": {
+          "startTime": {
+            "type": "string",
+            "format": "date-time",
+            "description": "新开场时间"
+          },
+          "hallId": {
+            "type": "integer",
+            "description": "新影厅ID"
+          },
+          "price": {
+            "type": "number",
+            "format": "float",
+            "description": "新票价"
+          }
+        }
+      },
+      "Session": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "场次ID"
+          },
+          "movieId": {
+            "type": "integer",
+            "description": "电影ID"
+          },
+          "hallId": {
+            "type": "integer",
+            "description": "影厅ID"
+          },
+          "start_time": {
+            "type": "string",
+            "format": "date-time",
+            "description": "开场时间"
+          },
+          "end_time": {
+            "type": "string",
+            "format": "date-time",
+            "description": "结束时间"
+          },
+          "price": {
+            "type": "number",
+            "format": "float",
+            "description": "基础价格"
+          },
+          "available_seats": {
+            "type": "integer",
+            "description": "可用座位数"
+          }
+        }
+      },
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "用户ID"
+          },
+          "username": {
+            "type": "string",
+            "description": "用户名"
+          },
+          "phone": {
+            "type": "string",
+            "description": "手机号"
+          },
+          "email": {
+            "type": "string",
+            "description": "邮箱"
+          },
+          "avatar": {
+            "type": "string",
+            "description": "头像URL"
+          },
+          "member_level": {
+            "type": "integer",
+            "description": "会员等级"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE",
+              "LOCKED"
+            ],
+            "description": "账户状态"
+          },
+          "create_time": {
+            "type": "string",
+            "format": "date-time",
+            "description": "创建时间"
+          }
+        }
+      },
+      "SeatMapResponse": {
+        "type": "object",
+        "properties": {
+          "sessionId": {
+            "type": "integer"
+          },
+          "rows": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "rowNo": {
+                  "type": "string"
+                },
+                "seats": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SeatStatus"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "SeatStatus": {
+        "type": "object",
+        "properties": {
+          "colNo": {
+            "type": "integer"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "AVAILABLE",
+              "LOCKED",
+              "OCCUPIED"
+            ]
+          }
+        }
+      },
+      "DailyStatistics": {
+        "type": "object",
+        "properties": {
+          "stat_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "ticket_sales": {
+            "type": "integer"
+          },
+          "revenue": {
+            "type": "number",
+            "format": "float"
+          }
+        }
+      },
+      "MovieStatistics": {
+        "type": "object",
+        "properties": {
+          "movieId": {
+            "type": "integer"
+          },
+          "title": {
+            "type": "string"
+          },
+          "ticket_sales": {
+            "type": "integer"
+          },
+          "revenue": {
+            "type": "number",
+            "format": "float"
+          },
+          "avg_rating": {
+            "type": "number",
+            "format": "float"
+          }
+        }
+      },
+      "DateRange": {
+        "type": "object",
+        "properties": {
+          "start": {
+            "type": "string",
+            "format": "date"
+          },
+          "end": {
+            "type": "string",
+            "format": "date"
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "errorCode": {
+            "type": "string",
+            "description": "错误代码"
+          },
+          "errorMessage": {
+            "type": "string",
+            "description": "错误描述"
+          }
+        },
+        "examples": [
+          {
+            "errorCode": "USER_NOT_FOUND",
+            "errorMessage": "指定用户不存在"
+          }
+        ]
+      }
+    },
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  },
+  "servers": [],
+  "security": []
+}

@@ -1,4 +1,4 @@
-package com.asaki0019.utils;
+package com.asaki0019.cinematicketbookingsystem.utils;
 
 import java.util.Map;
 import java.util.HashMap;
