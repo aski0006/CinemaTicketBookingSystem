@@ -1,9 +1,13 @@
 package com.asaki0019.cinematicketbookingsystem.controller;
 
+import com.asaki0019.cinematicketbookingsystem.entities.User;
 import com.asaki0019.cinematicketbookingsystem.services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -25,15 +29,12 @@ public class UserController {
             resp.putAll(data);
             return resp;
         } catch (IllegalArgumentException e) {
-            throw new org.springframework.web.server.ResponseStatusException(
-                    org.springframework.http.HttpStatus.BAD_REQUEST, e.getMessage());
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         } catch (RuntimeException e) {
             if (e.getMessage().contains("已存在")) {
-                throw new org.springframework.web.server.ResponseStatusException(
-                        org.springframework.http.HttpStatus.CONFLICT, e.getMessage());
+                throw new ResponseStatusException(HttpStatus.CONFLICT, e.getMessage());
             }
-            throw new org.springframework.web.server.ResponseStatusException(
-                    org.springframework.http.HttpStatus.BAD_REQUEST, e.getMessage());
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         }
     }
 
@@ -49,11 +50,23 @@ public class UserController {
             return resp;
         } catch (RuntimeException e) {
             if (e.getMessage().contains("密码错误") || e.getMessage().contains("账号状态异常")) {
-                throw new org.springframework.web.server.ResponseStatusException(
-                        org.springframework.http.HttpStatus.UNAUTHORIZED, e.getMessage());
+                throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, e.getMessage());
             }
-            throw new org.springframework.web.server.ResponseStatusException(
-                    org.springframework.http.HttpStatus.BAD_REQUEST, e.getMessage());
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
+        }
+    }
+
+    /**
+     * 修改个人信息
+     */
+    @PutMapping("/{userId}")
+    public Map<String, Object> updateUserInfo(@PathVariable Long userId, @RequestBody Map<String, String> req) {
+        try {
+            return userService.updateUserInfo(userId, req.get("phone"), req.get("email"), req.get("avatar"));
+        } catch (ResponseStatusException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "更新失败：" + e.getMessage());
         }
     }
 }

@@ -16,6 +16,11 @@ public interface UserService {
      */
     Map<String, Object> login(String identifier, String password);
 
+    /**
+     * 更新用户信息，返回更新结果
+     */
+    Map<String, Object> updateUserInfo(Long userId, String phone, String email, String avatar);
+
     User findByUsername(String username);
 
     User findByPhone(String phone);

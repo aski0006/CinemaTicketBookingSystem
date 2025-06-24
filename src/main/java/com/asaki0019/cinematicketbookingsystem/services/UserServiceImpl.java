@@ -5,9 +5,11 @@ import com.asaki0019.cinematicketbookingsystem.repository.UserRepository;
 import com.asaki0019.cinematicketbookingsystem.utils.EncryptionUtils;
 import com.asaki0019.cinematicketbookingsystem.utils.JwtTokenUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -148,5 +150,44 @@ public class UserServiceImpl implements UserService {
     @Override
     public boolean existsByEmail(String email) {
         return userRepository.existsByEmail(email);
+    }
+
+    @Override
+    public Map<String, Object> updateUserInfo(Long userId, String phone, String email, String avatar) {
+        Map<String, Object> resp = new HashMap<>();
+
+        // 获取用户
+        User user = getUserById(userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "用户不存在"));
+
+        // 验证手机号唯一性
+        if (phone != null && !phone.equals(user.getPhone())) {
+            User existingUser = findByPhone(phone);
+            if (existingUser != null && !existingUser.getId().equals(userId)) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "手机号已被使用");
+            }
+            user.setPhone(phone);
+        }
+
+        // 验证邮箱唯一性
+        if (email != null && !email.equals(user.getEmail())) {
+            if (existsByEmail(email)) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "邮箱已被使用");
+            }
+            user.setEmail(email);
+        }
+
+        // 更新头像
+        if (avatar != null) {
+            user.setAvatar(avatar);
+        }
+
+        // 保存更新
+        user = updateUser(user);
+
+        // 返回结果
+        resp.put("id", user.getId());
+        resp.put("update_time", LocalDateTime.now());
+        return resp;
     }
 }
