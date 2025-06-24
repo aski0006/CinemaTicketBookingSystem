@@ -1,5 +1,6 @@
 package com.asaki0019.cinematicketbookingsystem.controller;
 
+import com.asaki0019.cinematicketbookingsystem.dto.MovieSearchResponseDTO;
 import com.asaki0019.cinematicketbookingsystem.entities.Movie;
 import com.asaki0019.cinematicketbookingsystem.services.MovieService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,16 +26,12 @@ public class MovieController {
     }
 
     @GetMapping("/search")
-    public Map<String, Object> searchMovies(
-            @RequestParam(required = false, defaultValue = "") String keyword,
+    public MovieSearchResponseDTO searchMovies(
+            @RequestParam(defaultValue = "") String keyword,
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size) {
         Pageable pageable = PageRequest.of(page - 1, size);
-        Page<Movie> moviePage = movieService.searchMovies(keyword, pageable);
-        Map<String, Object> response = new HashMap<>();
-        response.put("total", moviePage.getTotalElements());
-        response.put("movies", moviePage.getContent());
-        return response;
+        return movieService.searchMovies(keyword, pageable);
     }
 
     @GetMapping("/recommendations")

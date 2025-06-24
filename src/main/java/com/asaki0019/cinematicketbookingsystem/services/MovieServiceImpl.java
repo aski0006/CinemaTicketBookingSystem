@@ -21,6 +21,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import com.asaki0019.cinematicketbookingsystem.dto.MovieSearchResponseDTO;
+import com.asaki0019.cinematicketbookingsystem.dto.MovieSummaryDTO;
+
 @Service
 public class MovieServiceImpl implements MovieService {
 
@@ -65,11 +68,21 @@ public class MovieServiceImpl implements MovieService {
     }
 
     @Override
-    public Page<Movie> searchMovies(String keyword, Pageable pageable) {
-        if (keyword == null) {
-            keyword = "";
-        }
-        return movieRepository.findByTitleContaining(keyword, pageable);
+    public MovieSearchResponseDTO searchMovies(String keyword, Pageable pageable) {
+        Page<Movie> moviePage = movieRepository.findByTitleContaining(keyword, pageable);
+        List<MovieSummaryDTO> movieSummaries = moviePage.getContent().stream()
+                .map(this::convertToMovieSummaryDTO)
+                .collect(Collectors.toList());
+        return new MovieSearchResponseDTO(moviePage.getTotalElements(), movieSummaries);
+    }
+
+    private MovieSummaryDTO convertToMovieSummaryDTO(Movie movie) {
+        return new MovieSummaryDTO(
+                movie.getId(),
+                movie.getTitle(),
+                movie.getPosterUrl(),
+                movie.getRating(),
+                movie.getStatus());
     }
 
     @Override

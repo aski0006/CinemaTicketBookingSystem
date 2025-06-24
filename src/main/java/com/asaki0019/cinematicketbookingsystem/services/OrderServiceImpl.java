@@ -1,8 +1,9 @@
 package com.asaki0019.cinematicketbookingsystem.services;
 
-import com.asaki0019.cinematicketbookingsystem.entities.Order;
-import com.asaki0019.cinematicketbookingsystem.entities.OrderRequest;
-import com.asaki0019.cinematicketbookingsystem.repository.OrderRepository;
+import com.asaki0019.cinematicketbookingsystem.dto.PaymentStatusDTO;
+import com.asaki0019.cinematicketbookingsystem.dto.UserOrderDTO;
+import com.asaki0019.cinematicketbookingsystem.entities.*;
+import com.asaki0019.cinematicketbookingsystem.repository.*;
 import com.asaki0019.cinematicketbookingsystem.utils.PaymentGatewayUtils;
 import com.asaki0019.cinematicketbookingsystem.utils.RedisCacheUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -13,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class OrderServiceImpl implements OrderService {
@@ -21,7 +23,22 @@ public class OrderServiceImpl implements OrderService {
     private OrderRepository orderRepository;
 
     @Autowired
+    private OrderSeatRepository orderSeatRepository;
+
+    @Autowired
+    private SeatRepository seatRepository;
+
+    @Autowired
+    private SessionRepository sessionRepository;
+
+    @Autowired
+    private MovieRepository movieRepository;
+
+    @Autowired
     private ObjectMapper objectMapper;
+
+    @Autowired
+    private RedisCacheUtils redisCacheUtils;
 
     private static final String ORDER_CACHE_PREFIX = "order:";
     private static final String SEAT_LOCK_PREFIX = "seat_lock:";
@@ -49,24 +66,25 @@ public class OrderServiceImpl implements OrderService {
         }
 
         // 2. 创建订单
-        Order order = new Order();
-        order.setUserId(orderRequest.getUserId());
-        order.setSessionId(orderRequest.getSessionId());
-        order.setOrderNo(generateOrderNo());
-        order.setStatus("PENDING_PAYMENT");
-        order.setCreateTime(LocalDateTime.now());
+        Order newOrder = new Order();
+        newOrder.setUserId(orderRequest.getUserId());
+        newOrder.setSessionId(orderRequest.getSessionId());
+        newOrder.setPaymentMethod(orderRequest.getPaymentMethod());
+        newOrder.setOrderNo(UUID.randomUUID().toString());
+        newOrder.setStatus("PENDING_PAYMENT");
+        newOrder.setCreateTime(LocalDateTime.now());
 
         // 计算总金额 (实际项目中需要根据座位类型和会员等级计算)
         double totalAmount = calculateTotalAmount(orderRequest.getSeatIds());
-        order.setTotalAmount(totalAmount);
+        newOrder.setTotalAmount(totalAmount);
 
         // 3. 保存订单
-        order = orderRepository.save(order);
+        newOrder = orderRepository.save(newOrder);
 
         // 4. 缓存订单信息
         try {
-            String orderJson = objectMapper.writeValueAsString(order);
-            RedisCacheUtils.set(ORDER_CACHE_PREFIX + order.getOrderNo(), orderJson, ORDER_CACHE_MINUTES * 60);
+            String orderJson = objectMapper.writeValueAsString(newOrder);
+            RedisCacheUtils.set(ORDER_CACHE_PREFIX + newOrder.getOrderNo(), orderJson, ORDER_CACHE_MINUTES * 60);
         } catch (JsonProcessingException e) {
             throw new RuntimeException("订单缓存失败");
         }
@@ -77,7 +95,7 @@ public class OrderServiceImpl implements OrderService {
 
         Map<String, Object> paymentResult = PaymentGatewayUtils.unifiedOrder(
                 PaymentGatewayUtils.PayType.valueOf(orderRequest.getPaymentMethod()),
-                order.getOrderNo(),
+                newOrder.getOrderNo(),
                 totalAmount,
                 "电影票购买",
                 "场次ID:" + orderRequest.getSessionId(),
@@ -86,16 +104,37 @@ public class OrderServiceImpl implements OrderService {
 
         // 6. 返回结果
         Map<String, Object> result = new HashMap<>();
-        result.put("id", order.getId());
-        result.put("order_no", order.getOrderNo());
+        result.put("id", newOrder.getId());
+        result.put("order_no", newOrder.getOrderNo());
         result.put("total_amount", totalAmount);
-        result.put("payment_url", paymentResult.get("payUrl"));
+        result.put("e_ticket_url", "http://example.com/eticket/" + newOrder.getOrderNo());
         return result;
     }
 
     @Override
-    public List<Order> getUserOrders(Long userId, String status) {
-        return orderRepository.findByUserIdAndStatus(userId, status);
+    public List<UserOrderDTO> getUserOrders(Long userId, String status) {
+        List<Order> orders = (status != null && !status.isEmpty())
+                ? orderRepository.findByUserIdAndStatus(userId, status)
+                : orderRepository.findByUserId(userId);
+
+        return orders.stream()
+                .map(this::convertToUserOrderDTO)
+                .collect(Collectors.toList());
+    }
+
+    private UserOrderDTO convertToUserOrderDTO(Order order) {
+        Session session = sessionRepository.findById(order.getSessionId()).orElse(null);
+        Movie movie = (session != null) ? movieRepository.findById(session.getMovieId()).orElse(null) : null;
+        List<OrderSeat> seats = orderSeatRepository.findByOrderId(order.getId());
+
+        return new UserOrderDTO(
+                order.getId(),
+                order.getOrderNo(),
+                (movie != null) ? movie.getTitle() : "N/A",
+                (session != null) ? session.getStartTime() : null,
+                seats.size(),
+                order.getTotalAmount(),
+                order.getStatus());
     }
 
     @Override
@@ -123,15 +162,10 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public Map<String, Object> getOrderPaymentStatus(Long orderId) {
+    public PaymentStatusDTO getPaymentStatus(Long orderId) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("订单不存在"));
-
-        Map<String, Object> result = new HashMap<>();
-        result.put("order_no", order.getOrderNo());
-        result.put("status", order.getStatus());
-        result.put("last_update", order.getPaymentTime());
-        return result;
+        return new PaymentStatusDTO(order.getOrderNo(), order.getStatus(), order.getUpdatedAt());
     }
 
     @Override
@@ -160,6 +194,39 @@ public class OrderServiceImpl implements OrderService {
                 RedisCacheUtils.del(SEAT_LOCK_PREFIX + seatId);
             }
         }
+    }
+
+    @Override
+    @Transactional
+    public void processPaymentCallback(PaymentCallbackRequest callbackRequest) {
+        Order order = orderRepository.findByOrderNo(callbackRequest.getOrderNo());
+        if (order == null) {
+            // 记录日志：未找到对应订单
+            return;
+        }
+
+        // 幂等性检查：如果订单状态已经完成或取消，则不再处理
+        if ("COMPLETED".equals(order.getStatus()) || "CANCELLED".equals(order.getStatus())) {
+            return;
+        }
+
+        if ("SUCCESS".equalsIgnoreCase(callbackRequest.getPaymentStatus())) {
+            order.setStatus("COMPLETED");
+            order.setPaymentTime(LocalDateTime.now());
+            // 在真实场景中，这里可能还需要记录支付流水号等信息
+        } else {
+            // 支付失败或超时，更新状态为失败，并释放锁定的座位
+            order.setStatus("FAILED");
+            List<OrderSeat> orderSeats = orderSeatRepository.findByOrderId(order.getId());
+            List<Long> seatIds = orderSeats.stream().map(OrderSeat::getSeatId).toList();
+            List<Seat> seats = seatRepository.findAllById(seatIds);
+            seats.forEach(seat -> {
+                seat.setStatus("AVAILABLE"); // 将座位状态恢复为可用
+            });
+            seatRepository.saveAll(seats);
+        }
+
+        orderRepository.save(order);
     }
 
     // 辅助方法

@@ -188,4 +188,22 @@ public class PaymentGatewayUtils {
         result.put("refundAmount", refundAmount);
         return result;
     }
+
+    public static String generatePaymentUrl(String orderNo, double amount) {
+        // 在实际应用中，这里会调用第三方支付SDK生成支付链接
+        return "http://mock-payment-url.com";
+    }
+
+    /**
+     * 校验支付回调签名
+     * 
+     * @param requestBody 回调请求体
+     * @param signature   签名
+     * @return 签名是否有效
+     */
+    public static boolean isValidSignature(String requestBody, String signature) {
+        // 在真实应用中，这里会用商户的私钥和支付平台的公钥来校验签名
+        // 这里为了演示，我们简单地认为所有回调都是有效的
+        return true;
+    }
 }

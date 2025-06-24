@@ -1,9 +1,11 @@
 package com.asaki0019.cinematicketbookingsystem.controller;
 
+import com.asaki0019.cinematicketbookingsystem.dto.SeatMapResponse;
 import com.asaki0019.cinematicketbookingsystem.entities.Session;
 import com.asaki0019.cinematicketbookingsystem.services.AdminSessionService;
 import com.asaki0019.cinematicketbookingsystem.utils.JwtTokenUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -16,7 +18,10 @@ public class AdminSessionController {
     private AdminSessionService adminSessionService;
 
     private boolean checkJwt(String token) {
-        return token != null && JwtTokenUtils.validateToken(token);
+        if (token == null || !token.startsWith("Bearer ")) {
+            return false;
+        }
+        return JwtTokenUtils.validateToken(token.substring(7));
     }
 
     @PostMapping
@@ -49,11 +54,8 @@ public class AdminSessionController {
     }
 
     @GetMapping("/{sessionId}/seats")
-    public Object getSessionSeats(@RequestHeader("Authorization") String token,
-            @PathVariable Long sessionId) {
-        if (!checkJwt(token)) {
-            return Map.of("error", "未登录或token已过期");
-        }
-        return adminSessionService.getSessionSeats(sessionId);
+    public ResponseEntity<SeatMapResponse> getSessionSeatStatus(@PathVariable Long sessionId) {
+        SeatMapResponse seatMap = adminSessionService.getSessionSeatStatus(sessionId);
+        return ResponseEntity.ok(seatMap);
     }
 }

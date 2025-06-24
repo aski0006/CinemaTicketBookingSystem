@@ -1,9 +1,11 @@
 package com.asaki0019.cinematicketbookingsystem.controller;
 
+import com.asaki0019.cinematicketbookingsystem.dto.RefundRequestDTO;
 import com.asaki0019.cinematicketbookingsystem.entities.Order;
 import com.asaki0019.cinematicketbookingsystem.services.AdminOrderService;
 import com.asaki0019.cinematicketbookingsystem.utils.JwtTokenUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -25,7 +27,7 @@ public class AdminOrderController {
      * 查询订单列表
      * /admin/orders?status=&startDate=&endDate=
      */
-    @GetMapping
+    @GetMapping("")
     public Object getOrderList(@RequestHeader("Authorization") String token,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String startDate,
@@ -33,9 +35,7 @@ public class AdminOrderController {
         if (!checkJwt(token)) {
             return Map.of("error", "未登录或token已过期");
         }
-        LocalDate start = startDate != null && !startDate.isEmpty() ? LocalDate.parse(startDate) : null;
-        LocalDate end = endDate != null && !endDate.isEmpty() ? LocalDate.parse(endDate) : null;
-        List<Order> orders = adminOrderService.getOrderList(status, start, end);
+        List<Order> orders = adminOrderService.searchOrders(status, startDate, endDate);
         Map<String, Object> resp = new HashMap<>();
         resp.put("orders", orders);
         resp.put("total", orders.size());
@@ -43,23 +43,25 @@ public class AdminOrderController {
     }
 
     /**
+     * 查询订单详情
+     * /admin/orders/{orderId}
+     */
+    @GetMapping("/{orderId}")
+    public ResponseEntity<Order> getOrderDetails(@PathVariable Long orderId) {
+        Order order = adminOrderService.getOrderDetails(orderId);
+        return ResponseEntity.ok(order);
+    }
+
+    /**
      * 订单退款
      * /admin/orders/{orderId}/refund
      */
     @PostMapping("/{orderId}/refund")
-    public Object refundOrder(@RequestHeader("Authorization") String token,
-            @PathVariable Long orderId,
-            @RequestBody Map<String, Object> req) {
-        if (!checkJwt(token)) {
-            return Map.of("error", "未登录或token已过期");
-        }
-        Double refundAmount = req.get("refundAmount") != null ? Double.valueOf(req.get("refundAmount").toString())
-                : null;
-        String reason = req.get("reason") != null ? req.get("reason").toString() : "";
-        Order refunded = adminOrderService.refundOrder(orderId, refundAmount, reason);
-        if (refunded == null) {
-            return Map.of("error", "订单不存在或无法退款");
-        }
-        return refunded;
+    public ResponseEntity<Order> refundOrder(@PathVariable Long orderId, @RequestBody RefundRequestDTO refundRequest) {
+        Order refundedOrder = adminOrderService.refundOrder(
+                orderId,
+                refundRequest.getRefundAmount(),
+                refundRequest.getReason());
+        return ResponseEntity.ok(refundedOrder);
     }
 }

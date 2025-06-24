@@ -1,18 +1,19 @@
 package com.asaki0019.cinematicketbookingsystem.services;
 
+import com.asaki0019.cinematicketbookingsystem.dto.UserListResponseDTO;
 import com.asaki0019.cinematicketbookingsystem.entities.User;
-import java.util.List;
+import org.springframework.data.domain.Pageable;
 
 public interface AdminUserService {
-    List<User> getUserList(String status, int page, int size);
+    UserListResponseDTO getAllUsers(Pageable pageable, String status);
 
     User createUser(User user);
 
-    User updateUser(Long userId, User user);
+    User updateUser(Long id, User userDetails);
 
-    void deleteUser(Long userId);
+    void deleteUser(Long id);
 
-    User lockUser(Long userId, String reason);
+    User lockUser(Long userId);
 
     User unlockUser(Long userId);
 }

@@ -1,5 +1,7 @@
 package com.asaki0019.cinematicketbookingsystem.controller;
 
+import com.asaki0019.cinematicketbookingsystem.dto.SessionResponseDTO;
+import com.asaki0019.cinematicketbookingsystem.dto.SessionSeatMapDTO;
 import com.asaki0019.cinematicketbookingsystem.entities.Session;
 import com.asaki0019.cinematicketbookingsystem.entities.Seat;
 import com.asaki0019.cinematicketbookingsystem.services.SessionService;
@@ -14,7 +16,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/sessions")
 public class SessionController {
     @Autowired
     private SessionService sessionService;
@@ -25,14 +27,10 @@ public class SessionController {
      * 查询电影场次
      * /api/sessions?movieId=&date=
      */
-    @GetMapping("/sessions")
-    public List<Session> getSessions(@RequestParam(required = false) Long movieId,
+    @GetMapping("")
+    public List<SessionResponseDTO> getSessions(@RequestParam(required = false) Long movieId,
             @RequestParam(required = false) String date) {
-        LocalDate localDate = null;
-        if (date != null && !date.isEmpty()) {
-            localDate = LocalDate.parse(date);
-        }
-        return sessionService.getSessions(movieId, localDate);
+        return sessionService.getSessions(movieId, date);
     }
 
     /**
@@ -40,7 +38,7 @@ public class SessionController {
      * /api/sessions/{sessionId}/seats
      * 需要登录校验
      */
-    @GetMapping("/sessions/{sessionId}/seats")
+    @GetMapping("/{sessionId}/seats")
     public Map<String, Object> getSessionSeats(@PathVariable Long sessionId,
             @RequestHeader(value = "Authorization", required = false) String token) {
         // 校验JWT
@@ -76,5 +74,10 @@ public class SessionController {
         result.put("sessionId", sessionId);
         result.put("rows", rowList);
         return result;
+    }
+
+    @GetMapping("/{sessionId}/seats")
+    public SessionSeatMapDTO getSeatMap(@PathVariable Long sessionId) {
+        return sessionService.getSeatMap(sessionId);
     }
 }
