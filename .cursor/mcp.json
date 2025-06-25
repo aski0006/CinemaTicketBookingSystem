@@ -14,7 +14,7 @@
             }
         },
         "OpenDeepWiki": {
-            "url": "https://opendeep.wiki/api/mcp?aski0006=AIDotNet&name=CinemaTicketBookingSystem"
+            "url": "https://opendeep.wiki/api/mcp?owner=aski0006&name=CinemaTicketBookingSystem"
         }
     }
 }

@@ -43,6 +43,8 @@ class OrderServiceImplTest {
     @Mock
     private MovieRepository movieRepository;
     @Mock
+    private UserRepository userRepository;
+    @Mock
     private RedisCacheUtils redisCacheUtils;
     @Spy
     private ObjectMapper objectMapper;
@@ -79,6 +81,11 @@ class OrderServiceImplTest {
         OrderRequest request = createValidOrderRequest();
         Order savedOrder = new Order();
         savedOrder.setOrderNo("ORD123");
+
+        // 模拟用户查询
+        User mockUser = new User();
+        mockUser.setMemberLevel(2); // 设置会员等级为2
+        when(userRepository.findById(1L)).thenReturn(Optional.of(mockUser));
 
         redisCacheUtilsMock.when(() -> RedisCacheUtils.exists(anyString())).thenReturn(false);
         when(orderRepository.save(any(Order.class))).thenReturn(savedOrder);
