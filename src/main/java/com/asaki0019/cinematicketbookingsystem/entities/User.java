@@ -40,6 +40,9 @@ public class User {
     @Column(name = "create_time")
     private LocalDateTime createTime;
 
+    @Column(name = "member_expire_at")
+    private LocalDateTime memberExpireAt;
+
     @PrePersist
     protected void onCreate() {
         createTime = LocalDateTime.now();

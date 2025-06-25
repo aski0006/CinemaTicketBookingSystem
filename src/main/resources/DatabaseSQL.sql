@@ -8,9 +8,10 @@ CREATE TABLE IF NOT EXISTS user (
     phone VARCHAR(20) UNIQUE NOT NULL,
     email VARCHAR(100) UNIQUE,
     avatar VARCHAR(255),
-    member_level TINYINT DEFAULT 0,
-    status ENUM('ACTIVE','INACTIVE','LOCKED') DEFAULT 'ACTIVE',
-    create_time DATETIME DEFAULT CURRENT_TIMESTAMP
+    member_level SMALLINT DEFAULT 0,
+    status ENUM('ACTIVE','INACTIVE','LOCKED','ADMIN') DEFAULT 'ACTIVE',
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+    member_expire_at DATETIME
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS movie (
@@ -93,6 +94,25 @@ CREATE TABLE IF NOT EXISTS statistics (
     session_id BIGINT,
     ticket_sales INT DEFAULT 0,
     revenue DECIMAL(12,2) DEFAULT 0.00
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS membership_order (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    order_no VARCHAR(32) UNIQUE NOT NULL,
+    user_id BIGINT NOT NULL,
+    membership_type ENUM('VIP','SVIP') NOT NULL,
+    duration ENUM('monthly','quarterly','yearly') NOT NULL,
+    payment_method ENUM('ALIPAY','WECHAT','CREDIT_CARD') NOT NULL,
+    total_amount DECIMAL(10,2) NOT NULL,
+    status ENUM('PENDING_PAYMENT','COMPLETED','FAILED') DEFAULT 'PENDING_PAYMENT',
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+    payment_time DATETIME,
+    payment_url VARCHAR(255),
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    refund_amount DECIMAL(10,2),
+    refund_status ENUM('NONE','REQUESTED','REFUNDED','REJECTED') DEFAULT 'NONE',
+    refund_time DATETIME,
+    CONSTRAINT fk_membership_order_user FOREIGN KEY (user_id) REFERENCES user(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- 外键约束统一添加

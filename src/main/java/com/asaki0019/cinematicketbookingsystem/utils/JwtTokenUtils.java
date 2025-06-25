@@ -192,4 +192,23 @@ public class JwtTokenUtils {
             super(message, cause);
         }
     }
+
+    /**
+     * 判断token中的用户是否为管理员
+     */
+    public static boolean isAdmin(String token) {
+        try {
+            Claims claims = parseToken(token);
+            // 约定member_level>=10为管理员，或status=ADMIN
+            Object level = claims.get("member_level");
+            Object status = claims.get("status");
+            if (level != null && ((Number) level).intValue() >= 10)
+                return true;
+            if (status != null && "ADMIN".equalsIgnoreCase(status.toString()))
+                return true;
+            return false;
+        } catch (Exception e) {
+            return false;
+        }
+    }
 }

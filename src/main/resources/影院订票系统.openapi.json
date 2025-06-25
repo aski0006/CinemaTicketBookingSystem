@@ -2021,6 +2021,128 @@
         },
         "security": []
       }
+    },
+    "/api/memberships/purchase": {
+      "post": {
+        "summary": "购买会员",
+        "description": "用户购买会员（如VIP、SVIP），支持多种支付方式。",
+        "tags": [
+          "会员"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "user_id": {
+                    "type": "integer",
+                    "description": "用户ID"
+                  },
+                  "membership_type": {
+                    "type": "string",
+                    "enum": [
+                      "VIP",
+                      "SVIP"
+                    ],
+                    "description": "会员类型"
+                  },
+                  "duration": {
+                    "type": "string",
+                    "enum": [
+                      "monthly",
+                      "quarterly",
+                      "yearly"
+                    ],
+                    "description": "购买时长"
+                  },
+                  "payment_method": {
+                    "type": "string",
+                    "enum": [
+                      "ALIPAY",
+                      "WECHAT",
+                      "CREDIT_CARD"
+                    ],
+                    "description": "支付方式"
+                  }
+                },
+                "required": [
+                  "user_id",
+                  "membership_type",
+                  "duration",
+                  "payment_method"
+                ]
+              },
+              "example": {
+                "user_id": 123,
+                "membership_type": "VIP",
+                "duration": "yearly",
+                "payment_method": "ALIPAY"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "下单成功，返回会员订单信息",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "order_id": {
+                      "type": "integer"
+                    },
+                    "order_no": {
+                      "type": "string"
+                    },
+                    "membership_type": {
+                      "type": "string"
+                    },
+                    "duration": {
+                      "type": "string"
+                    },
+                    "total_amount": {
+                      "type": "number"
+                    },
+                    "status": {
+                      "type": "string"
+                    },
+                    "payment_url": {
+                      "type": "string",
+                      "description": "第三方支付跳转链接"
+                    }
+                  }
+                },
+                "example": {
+                  "order_id": 1001,
+                  "order_no": "VIP202406280001",
+                  "membership_type": "VIP",
+                  "duration": "yearly",
+                  "total_amount": 248.0,
+                  "status": "PENDING_PAYMENT",
+                  "payment_url": "https://pay.example.com/redirect?order=VIP202406280001"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "参数错误或不支持的会员类型/支付方式",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "error": "INVALID_PARAMS",
+                  "message": "参数不合法"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
