@@ -8,10 +8,13 @@
         <el-menu-item index="1">首页</el-menu-item>
         <el-menu-item index="2">影院</el-menu-item>
         <el-menu-item index="3">影片浏览</el-menu-item>
-        <el-menu-item index="4">登录</el-menu-item>
-        <el-menu-item index="5">注册</el-menu-item>
+        <el-menu-item index="4" @click="showLogin = true">登录</el-menu-item>
+        <el-menu-item index="5" @click="showRegister = true">注册</el-menu-item>
       </el-menu>
     </div>
+    <div v-if="showLogin || showRegister" class="modal-backdrop"></div>
+    <LoginDialog v-model="showLogin" @close="showLogin = false" @switch="handleSwitchDialog" />
+    <RegisterDialog v-model="showRegister" @close="showRegister = false" @switch="handleSwitchDialog" />
 
     <!-- Hero Section -->
     <div class="hero-section">
@@ -117,6 +120,8 @@
 <script setup>
 import { ref, computed } from 'vue';
 import defaultMoviePng from '../assets/defaultMoviePng.webp'
+import LoginDialog from '../components/LoginDialog.vue';
+import RegisterDialog from '../components/RegisterDialog.vue';
 const activeIndex = ref('1');
 const ctaButtonText = ref('立即购票');
 const recommendedMovies = ref([
@@ -245,6 +250,18 @@ const testimonials = [
     text: '会员购票优惠多，客服响应快，值得推荐。'
   }
 ];
+
+const showLogin = ref(false)
+const showRegister = ref(false)
+function handleSwitchDialog(type) {
+  if (type === 'login') {
+    showRegister.value = false
+    showLogin.value = true
+  } else {
+    showLogin.value = false
+    showRegister.value = true
+  }
+}
 </script>
 
 <style scoped>
@@ -644,5 +661,13 @@ const testimonials = [
     grid-template-columns: 1fr;
     gap: 32px;
   }
+}
+
+.modal-backdrop {
+  position: fixed;
+  left: 0; top: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.35);
+  z-index: 1000;
+  backdrop-filter: blur(2px);
 }
 </style> 
