@@ -40,6 +40,9 @@ public class OrderServiceImpl implements OrderService {
     @Autowired
     private RedisCacheUtils redisCacheUtils;
 
+    @Autowired
+    private UserRepository userRepository;
+
     private static final String ORDER_CACHE_PREFIX = "order:";
     private static final String SEAT_LOCK_PREFIX = "seat_lock:";
     private static final int ORDER_CACHE_MINUTES = 15;
@@ -75,7 +78,9 @@ public class OrderServiceImpl implements OrderService {
         newOrder.setCreateTime(LocalDateTime.now());
 
         // 计算总金额 (实际项目中需要根据座位类型和会员等级计算)
-        double totalAmount = calculateTotalAmount(orderRequest.getSeatIds());
+        Integer memberLevel = userRepository.findById(orderRequest.getUserId())
+                .map(User::getMemberLevel).orElse(0);
+        double totalAmount = calculateTotalAmount(orderRequest.getSeatIds(), memberLevel);
         newOrder.setTotalAmount(totalAmount);
 
         // 3. 保存订单
@@ -234,18 +239,32 @@ public class OrderServiceImpl implements OrderService {
         return "ORD" + System.currentTimeMillis() + new Random().nextInt(1000);
     }
 
-    private double calculateTotalAmount(List<Long> seatIds) {
-        // TODO: 实际项目中需要根据座位类型和会员等级计算
-        return seatIds.size() * 50.0;
+    private double calculateTotalAmount(List<Long> seatIds, Integer memberLevel) {
+        if (memberLevel == null)
+            memberLevel = 0;
+        double base = seatIds.size() * 50.0;
+        double discount = 1 - 0.1 * memberLevel;
+        if (discount < 0)
+            discount = 0;
+        return base * discount;
     }
 
     private List<Long> getSeatIds(Order order) {
-        // TODO: 实际项目中需要从OrderSeat表中获取
-        return new ArrayList<>();
+        List<OrderSeat> orderSeats = orderSeatRepository.findByOrderId(order.getId());
+        List<Long> seatIds = new ArrayList<>();
+        for (OrderSeat os : orderSeats) {
+            seatIds.add(os.getSeatId());
+        }
+        return seatIds;
     }
 
     private String generateETicket(Order order) {
-        // TODO: 实际项目中需要生成电子票
-        return "https://your-domain/e-tickets/" + order.getOrderNo() + ".pdf";
+        // 生成二维码内容为订单号
+        try {
+            return com.asaki0019.cinematicketbookingsystem.utils.QRCodeUtils.generateQRCodeBase64(
+                    "订单号:" + order.getOrderNo(), 300, 300);
+        } catch (Exception e) {
+            return "二维码生成失败";
+        }
     }
 }

@@ -12,6 +12,9 @@
             "env": {
                 "APIFOX_ACCESS_TOKEN": "<APS-UakucW7wTEji59RkX9qpbg0jnmU6NAhw>"
             }
+        },
+        "OpenDeepWiki": {
+            "url": "https://opendeep.wiki/api/mcp?aski0006=AIDotNet&name=CinemaTicketBookingSystem"
         }
     }
 }
