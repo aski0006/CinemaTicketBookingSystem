@@ -57,15 +57,13 @@ public class AdminOrderServiceImpl implements AdminOrderService {
             throw new IllegalStateException("只有已完成的订单才能退款");
         }
 
-        PaymentGatewayUtils.PayType payType;
-        try {
-            payType = PaymentGatewayUtils.PayType.valueOf(order.getPaymentMethod().toUpperCase());
-        } catch (Exception e) {
+        // 修正：校验支付方式
+        if (!"ALIPAY".equalsIgnoreCase(order.getPaymentMethod())) {
             throw new IllegalStateException("不支持的支付方式，无法退款: " + order.getPaymentMethod());
         }
 
         PaymentGatewayUtils.refund(
-                payType,
+                PaymentGatewayUtils.PayType.ALIPAY,
                 order.getOrderNo(),
                 refundAmount,
                 reason);

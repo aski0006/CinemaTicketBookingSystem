@@ -6,76 +6,85 @@
         <el-menu-item index="0" class="logo">CinemaBooking</el-menu-item>
         <div class="flex-grow" />
         <el-menu-item index="1">首页</el-menu-item>
-        <el-menu-item index="2">影院</el-menu-item>
-        <el-menu-item index="3">影片浏览</el-menu-item>
-        <el-menu-item index="4" @click="showLogin = true">登录</el-menu-item>
-        <el-menu-item index="5" @click="showRegister = true">注册</el-menu-item>
+        <el-menu-item index="2">影片浏览</el-menu-item>
+        <el-menu-item index="3" @click="showLogin = true">登录</el-menu-item>
+        <el-menu-item index="4" @click="showRegister = true">注册</el-menu-item>
       </el-menu>
     </div>
     <div v-if="showLogin || showRegister" class="modal-backdrop"></div>
     <LoginDialog v-model="showLogin" @close="showLogin = false" @switch="handleSwitchDialog" />
     <RegisterDialog v-model="showRegister" @close="showRegister = false" @switch="handleSwitchDialog" />
 
-    <!-- Hero Section -->
-    <div class="hero-section">
-      <div class="hero-bg"></div>
-      <div class="hero-content container">
-        <h1 class="hero-title">ASAKI CINEMA</h1>
-        <p class="hero-subtitle">快来看看这些不容错过的热门影片，开启你的观影之旅！</p>
-        <el-button class="hero-cta" type="primary" size="large" round>{{ ctaButtonText }}</el-button>
+    <!-- Hero Section，背景图片+底部渐变 -->
+    <div class="hero-section-bg">
+      <div class="hero-section">
+        <div class="hero-bg"></div>
+        <div class="hero-content container">
+          <h1 class="hero-title">ASAKI CINEMA</h1>
+          <p class="hero-subtitle">快来看看这些不容错过的热门影片，开启你的观影之旅！</p>
+          <el-button class="hero-cta" type="primary" size="large" round>{{ ctaButtonText }}</el-button>
+        </div>
+        <div class="hero-fade-to-card"></div>
       </div>
     </div>
 
-    <!-- Recommendation Module -->
-    <el-main class="recommendation-module">
-      <div class="container">
-        <h2 class="section-title">精彩影片推荐</h2>
-        <el-carousel height="340px" indicator-position="outside" arrow="hover" class="movie-carousel" @change="onCarouselChange">
-          <el-carousel-item v-for="movie in recommendedMovies" :key="movie.id">
-            <img
-              :src="movie.poster_url"
-              class="carousel-movie-poster"
-              :alt="movie.title"
-              @click="() => handleMovieClick(movie)"
+    <!-- 推荐影片 卡片 -->
+    <el-card class="section-card recommend-card" shadow="always">
+      <div class="recommendation-module card-content">
+        <div class="container">
+          <h2 class="section-title">精彩影片推荐</h2>
+          <el-carousel height="340px" indicator-position="outside" arrow="hover" class="movie-carousel" @change="onCarouselChange">
+            <el-carousel-item v-for="movie in recommendedMovies" :key="movie.id">
+              <img
+                :src="movie.poster_url"
+                class="carousel-movie-poster"
+                :alt="movie.title"
+                @click="() => handleMovieClick(movie)"
+              />
+            </el-carousel-item>
+          </el-carousel>
+          <div class="carousel-movie-info">
+            <span class="movie-title">{{ currentMovie.title }}</span>
+            <el-rate
+              v-model="currentMovie.rating"
+              disabled
+              show-score
+              text-color="#ff9900"
+              score-template="{value} 分"
             />
-          </el-carousel-item>
-        </el-carousel>
-        <div class="carousel-movie-info">
-          <span class="movie-title">{{ currentMovie.title }}</span>
-          <el-rate
-            v-model="currentMovie.rating"
-            disabled
-            show-score
-            text-color="#ff9900"
-            score-template="{value} 分"
-          />
+          </div>
         </div>
       </div>
-    </el-main>
-    <!-- Feature Showcase Section -->
-    <section class="feature-showcase-section">
-      <div class="container feature-showcase-grid">
-        <div class="feature-item" v-for="(feature, idx) in features" :key="idx">
-          <img :src="feature.img" class="feature-img" :alt="feature.title" />
-          <div class="feature-title">{{ feature.title }}</div>
-          <div class="feature-desc">{{ feature.desc }}</div>
-        </div>
-      </div>
-    </section>
+    </el-card>
 
-    <!-- Testimonials Section -->
-    <section class="testimonials-section">
-      <div class="container testimonials-grid">
-        <div class="testimonial-card" v-for="(t, idx) in testimonials" :key="idx">
-          <img :src="t.avatar" class="testimonial-avatar" :alt="t.name" />
-          <div class="testimonial-name">{{ t.name }}</div>
-          <div class="testimonial-title">{{ t.title }}</div>
-          <div class="testimonial-text">“{{ t.text }}”</div>
+    <!-- 功能亮点 卡片 -->
+    <el-card class="section-card feature-card" shadow="always">
+      <section class="feature-showcase-section card-content">
+        <div class="container feature-showcase-grid">
+          <div class="feature-item" v-for="(feature, idx) in features" :key="idx">
+            <img :src="feature.img" class="feature-img" :alt="feature.title" />
+            <div class="feature-title">{{ feature.title }}</div>
+            <div class="feature-desc">{{ feature.desc }}</div>
+          </div>
         </div>
-      </div>
-    </section>
+      </section>
+    </el-card>
 
-    <!-- Pricing Section -->
+    <!-- 用户评价 卡片 -->
+    <el-card class="section-card testimonial-card" shadow="always">
+      <section class="testimonials-section card-content">
+        <div class="container testimonials-grid">
+          <div class="testimonial-card" v-for="(t, idx) in testimonials" :key="idx">
+            <img :src="t.avatar" class="testimonial-avatar" :alt="t.name" />
+            <div class="testimonial-name">{{ t.name }}</div>
+            <div class="testimonial-title">{{ t.title }}</div>
+            <div class="testimonial-text">“{{ t.text }}”</div>
+          </div>
+        </div>
+      </section>
+    </el-card>
+
+    <!-- 会员购模块（无卡片，白色背景） -->
     <section class="pricing-section">
       <div class="container">
         <h2 class="section-title">成为会员，畅享特权</h2>
@@ -108,12 +117,36 @@
       </div>
     </section>
 
+    <!-- FAQ模块 -->
+    <el-card class="section-card faq-card" shadow="always">
+      <section class="faq-section card-content">
+        <h1 class="faq-title">常见问题解答</h1>
+        <div class="faq-intro">欢迎来到影院订票桌面网站，涵盖多种订票功能，为您提供便捷服务！</div>
+        <div class="faq-list">
+          <div class="faq-entry" id="faq1">
+            <div class="faq-question">如何修改订票信息?</div>
+            <div class="faq-answer">您可在<span class="faq-link">个人页面</span>中进行修改，具体请查看相关操作指引。</div>
+            <hr class="faq-divider" />
+          </div>
+          <div class="faq-entry" id="faq2">
+            <div class="faq-question">订票后能否退票?</div>
+            <div class="faq-answer">如需退票，请在订单详情页点击"申请退票"，具体请查看<span class="faq-link">退票规则</span>。</div>
+            <hr class="faq-divider" />
+          </div>
+          <div class="faq-entry" id="faq3">
+            <div class="faq-question">影片场次信息在哪里查看?</div>
+            <div class="faq-answer">您可在首页或影片浏览页选择影片，点击进入详情页后查看所有场次信息。</div>
+          </div>
+        </div>
+      </section>
+    </el-card>
+
     <!-- Footer -->
-    <el-footer class="footer">
-      <div class="container">
-        <p>&copy; 2024 CinemaBooking Visual Language. All rights reserved.</p>
+    <footer class="starlight-footer">
+      <div class="footer-content">
+        © 2024 StarlightCinema ASAKI CINEMA | 专注优质电影票预订服务
       </div>
-    </el-footer>
+    </footer>
   </div>
 </template>
 
@@ -123,7 +156,7 @@ import defaultMoviePng from '../assets/defaultMoviePng.webp'
 import LoginDialog from '../components/LoginDialog.vue';
 import RegisterDialog from '../components/RegisterDialog.vue';
 const activeIndex = ref('1');
-const ctaButtonText = ref('立即购票');
+const ctaButtonText = ref('登录网站');
 const recommendedMovies = ref([
   { id: 1, title: '沙丘', poster_url: defaultMoviePng, rating: 4.5 },
   { id: 2, title: '星际穿越', poster_url: defaultMoviePng, rating: 4.9 },
@@ -296,6 +329,11 @@ function handleSwitchDialog(type) {
   flex-grow: 1;
 }
 
+.hero-section-bg {
+  background: url('https://images.unsplash.com/photo-1464983953574-0892a716854b?auto=format&fit=crop&w=1200&q=80') center/cover no-repeat;
+  position: relative;
+}
+
 .hero-section {
   position: relative;
   display: flex;
@@ -374,6 +412,14 @@ function handleSwitchDialog(type) {
   color: #fff;
 }
 
+.hero-fade-to-card {
+  position: absolute;
+  left: 0; right: 0; bottom: 0; height: 10px;
+  background: linear-gradient(to bottom, rgba(255,255,255,0) 0%, #f5f6fa 100%);
+  pointer-events: none;
+  z-index: 2;
+}
+
 .recommendation-module {
   padding: 80px 0;
   background: #fff;
@@ -424,16 +470,30 @@ function handleSwitchDialog(type) {
     margin-top: 10px;
 }
 
-.footer {
-  padding: 20px 0;
+.starlight-footer {
+  width: 100%;
+  background: #000;
+  color: #CCCCCC;
+  font-size: 14px;
+  font-weight: 300;
+  text-align: center;
+  padding: 20px 0 16px 0;
+  position: relative;
   margin-top: 40px;
-  border-top: 1px solid #eeeeee;
-  color: #757575;
-  background-color: #f8f9fa;
+  letter-spacing: 0.5px;
 }
 
-.footer .container {
-    text-align: center;
+.footer-content {
+  margin: 0 auto;
+  max-width: 90vw;
+  line-height: 1.8;
+}
+
+@media (max-width: 600px) {
+  .starlight-footer {
+    font-size: 13px;
+    padding: 14px 0 10px 0;
+  }
 }
 
 /* Pricing Section */
@@ -669,5 +729,110 @@ function handleSwitchDialog(type) {
   background: rgba(0,0,0,0.35);
   z-index: 1000;
   backdrop-filter: blur(2px);
+}
+
+.section-card {
+  background: #f5f6fa;
+  border-radius: 24px;
+  box-shadow: 0 8px 32px rgba(30,34,60,0.10);
+  margin: 32px auto 0 auto;
+  padding: 0;
+  overflow: visible;
+  max-width: 1200px;
+  width: 100%;
+}
+.card-content {
+  background: #fff;
+  border-radius: 20px;
+  margin: 32px;
+  padding: 32px 24px;
+  box-shadow: 0 4px 24px rgba(30,136,229,0.08);
+}
+@media (max-width: 1300px) {
+  .section-card {
+    max-width: 98vw;
+  }
+}
+@media (max-width: 900px) {
+  .card-content {
+    margin: 16px;
+    padding: 20px 8px;
+  }
+  .section-card {
+    margin: 16px auto 0 auto;
+    border-radius: 12px;
+    max-width: 100vw;
+  }
+}
+
+.faq-card {
+  background: #f5f6fa;
+  border-radius: 24px;
+  box-shadow: 0 8px 32px rgba(30,34,60,0.10);
+  margin: 32px auto 0 auto;
+  padding: 0;
+  overflow: visible;
+  max-width: 1200px;
+  width: 100%;
+}
+.faq-section.card-content {
+  background: #fff;
+  border-radius: 20px;
+  margin: 32px;
+  padding: 32px 24px;
+  box-shadow: 0 4px 24px rgba(30,136,229,0.08);
+}
+.faq-title {
+  font-size: 24px;
+  font-weight: bold;
+  text-align: center;
+  line-height: 1.3;
+  margin: 0 0 24px 0;
+}
+.faq-intro {
+  font-size: 17px;
+  font-weight: normal;
+  text-align: center;
+  margin: 0 auto 32px auto;
+  max-width: 80%;
+}
+.faq-list {
+  width: 100%;
+}
+.faq-entry {
+  margin-bottom: 24px;
+}
+.faq-question {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 16px 0 8px 0;
+  cursor: pointer;
+}
+.faq-answer {
+  font-size: 16px;
+  font-weight: normal;
+  line-height: 1.5;
+  margin: 0 0 16px 0;
+}
+.faq-divider {
+  border: none;
+  border-top: 1px solid #e0e0e0;
+  margin: 0 0 0 0;
+}
+.faq-link {
+  color: #1e88e5;
+  cursor: pointer;
+  text-decoration: underline;
+}
+@media (max-width: 900px) {
+  .faq-section.card-content {
+    margin: 16px;
+    padding: 20px 8px;
+  }
+  .faq-card {
+    margin: 16px auto 0 auto;
+    border-radius: 12px;
+    max-width: 100vw;
+  }
 }
 </style> 

@@ -59,7 +59,7 @@ public class MembershipOrderServiceImpl implements MembershipOrderService {
         Map<String, String> extraParams = new HashMap<>();
         extraParams.put("return_url", RETURN_URL);
         Map<String, Object> paymentResult = PaymentGatewayUtils.unifiedOrder(
-                PaymentGatewayUtils.PayType.valueOf(requestDTO.getPaymentMethod()),
+                PaymentGatewayUtils.PayType.ALIPAY,
                 order.getOrderNo(),
                 price,
                 "会员购买",
@@ -196,7 +196,7 @@ public class MembershipOrderServiceImpl implements MembershipOrderService {
         if (approve) {
             // 自动调用支付网关退款
             Map<String, Object> refundResult = PaymentGatewayUtils.refund(
-                    PaymentGatewayUtils.PayType.valueOf(order.getPaymentMethod()),
+                    PaymentGatewayUtils.PayType.ALIPAY,
                     order.getOrderNo(),
                     order.getRefundAmount() != null ? order.getRefundAmount() : order.getTotalAmount(),
                     reason != null ? reason : "会员退款");

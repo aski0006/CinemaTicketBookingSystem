@@ -99,7 +99,7 @@ public class OrderServiceImpl implements OrderService {
         extraParams.put("return_url", RETURN_URL);
 
         Map<String, Object> paymentResult = PaymentGatewayUtils.unifiedOrder(
-                PaymentGatewayUtils.PayType.valueOf(orderRequest.getPaymentMethod()),
+                PaymentGatewayUtils.PayType.ALIPAY,
                 newOrder.getOrderNo(),
                 totalAmount,
                 "电影票购买",
