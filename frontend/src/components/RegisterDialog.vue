@@ -34,6 +34,10 @@
           size="large"
           clearable
         />
+        <el-button size="small" style="margin-top:6px;" @click="generatePhone">自动生成手机号</el-button>
+        <div v-if="form.phone" :style="{color: phoneLengthColor, fontSize: '12px', marginTop: '2px'}">
+          已输入 {{ form.phone.length }}/11 位
+        </div>
       </el-form-item>
       <el-form-item prop="email">
         <el-input
@@ -41,7 +45,14 @@
           placeholder="邮箱"
           size="large"
           clearable
+          @input="onEmailInput"
+          @focus="onEmailFocus"
+          @blur="onEmailBlur"
+          ref="emailInputRef"
         />
+        <ul v-if="showEmailSuggestions && filteredEmailSuggestions.length" class="email-suggestion-list">
+          <li v-for="item in filteredEmailSuggestions" :key="item" @mousedown.prevent="selectEmailSuggestion(item)">{{ item }}</li>
+        </ul>
       </el-form-item>
       <el-form-item>
         <el-button
@@ -71,7 +82,7 @@
 </template>
 
 <script setup>
-import { ref, watch, defineEmits, defineProps } from 'vue'
+import { ref, watch, defineEmits, defineProps, nextTick, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import service from '@/api/request'
 
@@ -110,6 +121,56 @@ const rules = {
 }
 const loading = ref(false)
 const errorMsg = ref('')
+
+const emailInputRef = ref()
+const showEmailSuggestions = ref(false)
+const emailSuggestions = [
+  '@qq.com',
+  '@163.com',
+  '@gmail.com',
+  '@outlook.com',
+  '@126.com',
+  '@sina.com',
+  '@hotmail.com',
+  '@foxmail.com'
+]
+const filteredEmailSuggestions = ref([])
+
+function onEmailInput(val) {
+  const atIdx = val.indexOf('@')
+  if (atIdx === -1) {
+    showEmailSuggestions.value = false
+    filteredEmailSuggestions.value = []
+    return
+  }
+  const prefix = val.slice(0, atIdx)
+  const suffix = val.slice(atIdx)
+  filteredEmailSuggestions.value = emailSuggestions
+    .filter(s => s.startsWith(suffix) && s !== suffix)
+    .map(s => prefix + s)
+  showEmailSuggestions.value = filteredEmailSuggestions.value.length > 0
+}
+function selectEmailSuggestion(suggestion) {
+  form.value.email = suggestion
+  showEmailSuggestions.value = false
+  nextTick(() => {
+    emailInputRef.value.blur()
+    emailInputRef.value.focus()
+  })
+}
+function onEmailFocus() {
+  if (form.value.email.includes('@')) {
+    onEmailInput(form.value.email)
+  }
+}
+function onEmailBlur() {
+  setTimeout(() => { showEmailSuggestions.value = false }, 100)
+}
+const phoneLengthColor = computed(() => {
+  if (form.value.phone.length === 11) return '#67c23a' // green
+  if (form.value.phone.length > 11) return '#f56c6c' // red
+  return '#909399' // gray
+})
 
 function onSubmit() {
   errorMsg.value = ''
@@ -163,6 +224,15 @@ function switchToLogin() {
   visible.value = false
   emit('switch', 'login')
 }
+function generatePhone() {
+  // 中国大陆手机号：1[3-9]开头，11位
+  const prefix = '1' + Math.floor(Math.random() * 7 + 3);
+  let phone = prefix;
+  for (let i = 0; i < 9; i++) {
+    phone += Math.floor(Math.random() * 10);
+  }
+  form.value.phone = phone;
+}
 </script>
 
 <style scoped>
@@ -176,5 +246,25 @@ function switchToLogin() {
 }
 .error-alert {
   margin-top: 10px;
+}
+.email-suggestion-list {
+  list-style: none;
+  margin: 0;
+  padding: 0 0 0 4px;
+  background: #fff;
+  border: 1px solid #dcdfe6;
+  border-radius: 4px;
+  position: absolute;
+  z-index: 10;
+  width: 95%;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+.email-suggestion-list li {
+  padding: 4px 8px;
+  cursor: pointer;
+  font-size: 13px;
+}
+.email-suggestion-list li:hover {
+  background: #f5f7fa;
 }
 </style> 

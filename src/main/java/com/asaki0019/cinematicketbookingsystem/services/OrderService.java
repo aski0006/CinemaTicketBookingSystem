@@ -22,4 +22,6 @@ public interface OrderService {
     void handlePaymentCallback(String orderNo, String status, String transactionId, double amount);
 
     void processPaymentCallback(PaymentCallbackRequest callbackRequest);
+
+    Map<String, Object> getOrderStatusByOrderNo(String orderNo);
 }

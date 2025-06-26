@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 import redis.clients.jedis.*;
 import redis.clients.jedis.params.SetParams;
 import redis.clients.jedis.exceptions.JedisException;
+import org.springframework.stereotype.Component;
 
 import java.util.*;
 import java.util.function.Consumer;
@@ -12,6 +13,7 @@ import java.util.function.Consumer;
 /**
  * Redis 操作工具类，支持多种部署模式，涵盖常用数据结构操作、事务、管道、发布订阅、异常处理与日志。
  */
+@Component
 public class RedisCacheUtils {
     private static final Logger logger = LoggerFactory.getLogger(RedisCacheUtils.class);
     private static JedisPool jedisPool;

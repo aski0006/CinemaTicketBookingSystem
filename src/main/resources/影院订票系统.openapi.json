@@ -967,17 +967,23 @@
                     "id": {
                       "type": "string"
                     },
+                    "member_level": {
+                      "type": "integer",
+                      "description": "会员等级"
+                    },
                     "create_time": {
                       "type": "string"
                     }
                   },
                   "required": [
                     "id",
+                    "member_level",
                     "create_time"
                   ]
                 },
                 "example": {
                   "id": "Long, 用户ID",
+                  "member_level": 0,
                   "create_time": "DateTime, 注册时间"
                 }
               }
@@ -1062,7 +1068,8 @@
                           "type": "string"
                         },
                         "member_level": {
-                          "type": "string"
+                          "type": "integer",
+                          "description": "会员等级"
                         }
                       },
                       "required": [
@@ -1080,7 +1087,7 @@
                   "token": "String, JWT令牌",
                   "user": {
                     "id": "Long, 用户ID",
-                    "member_level": "Integer, 会员等级"
+                    "member_level": 0
                   }
                 }
               }

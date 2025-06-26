@@ -44,6 +44,11 @@ public class ExceptionHandlerUtils {
         body.put("code", 500);
         body.put("msg", "服务器内部错误");
         body.put("detail", ex.getMessage());
+        if (ex.getStackTrace().length > 0) {
+            StackTraceElement ste = ex.getStackTrace()[0];
+            String location = ste.getClassName() + "." + ste.getMethodName() + ":" + ste.getLineNumber();
+            body.put("location", location);
+        }
         return new ResponseEntity<>(body, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 

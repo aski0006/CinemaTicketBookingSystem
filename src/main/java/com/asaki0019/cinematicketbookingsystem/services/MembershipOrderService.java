@@ -6,6 +6,8 @@ import com.asaki0019.cinematicketbookingsystem.dto.MembershipOrderQueryResponseD
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import java.util.Map;
+
 public interface MembershipOrderService {
     MembershipPurchaseResponseDTO purchaseMembership(MembershipPurchaseRequestDTO requestDTO);
 
@@ -16,5 +18,9 @@ public interface MembershipOrderService {
     void requestRefund(Long orderId, Double refundAmount, String reason);
 
     void processRefund(Long orderId, boolean approve, String reason);
+
+    Map<String, Object> getOrderStatusByOrderNo(String orderNo);
+
+    double calculateMembershipPrice(String type, String duration);
     // 可扩展：查询会员订单、退款等
 }

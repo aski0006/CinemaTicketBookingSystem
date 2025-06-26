@@ -4,8 +4,12 @@ import com.asaki0019.cinematicketbookingsystem.entities.User;
 import com.asaki0019.cinematicketbookingsystem.services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import com.asaki0019.cinematicketbookingsystem.dto.UserResponseDTO;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -68,5 +72,30 @@ public class UserController {
         } catch (Exception e) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "更新失败：" + e.getMessage());
         }
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<UserResponseDTO> getCurrentUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !(authentication
+                .getPrincipal() instanceof com.asaki0019.cinematicketbookingsystem.entities.User user)) {
+            return ResponseEntity.status(401).build();
+        }
+        // 查数据库最新用户信息
+        java.util.Optional<User> dbUserOpt = userService.getUserById(user.getId());
+        if (dbUserOpt.isEmpty()) {
+            return ResponseEntity.status(404).build();
+        }
+        User dbUser = dbUserOpt.get();
+        UserResponseDTO dto = new UserResponseDTO();
+        dto.setId(dbUser.getId());
+        dto.setUsername(dbUser.getUsername());
+        dto.setPhone(dbUser.getPhone());
+        dto.setEmail(dbUser.getEmail());
+        dto.setAvatar(dbUser.getAvatar());
+        dto.setMemberLevel(dbUser.getMemberLevel());
+        dto.setStatus(dbUser.getStatus());
+        dto.setCreateTime(dbUser.getCreateTime());
+        return ResponseEntity.ok(dto);
     }
 }

@@ -57,6 +57,7 @@ public class UserServiceImpl implements UserService {
         user = userRepository.save(user);
 
         resp.put("id", user.getId());
+        resp.put("member_level", user.getMemberLevel());
         resp.put("create_time", user.getCreateTime());
         return resp;
     }

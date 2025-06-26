@@ -9,6 +9,7 @@ import com.asaki0019.cinematicketbookingsystem.repository.MembershipOrderReposit
 import com.asaki0019.cinematicketbookingsystem.repository.UserRepository;
 import com.asaki0019.cinematicketbookingsystem.utils.PaymentGatewayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -26,8 +27,11 @@ public class MembershipOrderServiceImpl implements MembershipOrderService {
     @Autowired
     private UserRepository userRepository;
 
-    private static final String CALLBACK_URL = "http://localhost:8081/api/payments/callback";
-    private static final String RETURN_URL = "http://localhost:8081/return_url";
+    @Value("${payment.callback.url:http://localhost:8081/api/payments/callback}")
+    private String callbackUrl;
+
+    @Value("${payment.return.url:http://localhost:8081/return_url}")
+    private String returnUrl;
 
     @Override
     @Transactional
@@ -57,18 +61,15 @@ public class MembershipOrderServiceImpl implements MembershipOrderService {
 
         // 调用支付网关
         Map<String, String> extraParams = new HashMap<>();
-        extraParams.put("return_url", RETURN_URL);
+        extraParams.put("return_url", returnUrl);
         Map<String, Object> paymentResult = PaymentGatewayUtils.unifiedOrder(
                 PaymentGatewayUtils.PayType.ALIPAY,
                 order.getOrderNo(),
                 price,
                 "会员购买",
                 requestDTO.getMembershipType() + " " + requestDTO.getDuration(),
-                CALLBACK_URL,
+                callbackUrl,
                 extraParams);
-        String paymentUrl = paymentResult.getOrDefault("payUrl", "").toString();
-        order.setPaymentUrl(paymentUrl);
-        membershipOrderRepository.save(order);
 
         // 返回响应
         MembershipPurchaseResponseDTO resp = new MembershipPurchaseResponseDTO();
@@ -78,7 +79,15 @@ public class MembershipOrderServiceImpl implements MembershipOrderService {
         resp.setDuration(order.getDuration());
         resp.setTotalAmount(order.getTotalAmount());
         resp.setStatus(order.getStatus());
-        resp.setPaymentUrl(order.getPaymentUrl());
+        // 兼容前端，返回支付页面内容（HTML form字符串）
+        Object payUrlObj = paymentResult.get("payUrl");
+        if (payUrlObj != null) {
+            try {
+                java.lang.reflect.Method m = resp.getClass().getMethod("setPaymentUrl", String.class);
+                m.invoke(resp, payUrlObj.toString());
+            } catch (Exception ignore) {
+            }
+        }
         return resp;
     }
 
@@ -126,25 +135,25 @@ public class MembershipOrderServiceImpl implements MembershipOrderService {
         return type + System.currentTimeMillis() + UUID.randomUUID().toString().substring(0, 4);
     }
 
-    private double calculateMembershipPrice(String type, String duration) {
-        // 简单定价，可根据实际需求调整
+    @Override
+    public double calculateMembershipPrice(String type, String duration) {
         if ("VIP".equals(type)) {
             switch (duration) {
                 case "monthly":
-                    return 30.0;
+                    return 25.0;
                 case "quarterly":
-                    return 80.0;
+                    return 68.0;
                 case "yearly":
                     return 248.0;
             }
         } else if ("SVIP".equals(type)) {
             switch (duration) {
                 case "monthly":
-                    return 60.0;
+                    return 99.0;
                 case "quarterly":
-                    return 160.0;
+                    return 288.0;
                 case "yearly":
-                    return 488.0;
+                    return 998.0;
             }
         }
         throw new IllegalArgumentException("不支持的会员类型或周期");
@@ -164,7 +173,6 @@ public class MembershipOrderServiceImpl implements MembershipOrderService {
         dto.setDuration(order.getDuration());
         dto.setTotalAmount(order.getTotalAmount());
         dto.setStatus(order.getStatus());
-        dto.setPaymentUrl(order.getPaymentUrl());
         dto.setCreateTime(order.getCreateTime());
         dto.setPaymentTime(order.getPaymentTime());
         dto.setRefundAmount(order.getRefundAmount());
@@ -211,5 +219,21 @@ public class MembershipOrderServiceImpl implements MembershipOrderService {
             order.setRefundStatus("REJECTED");
         }
         membershipOrderRepository.save(order);
+    }
+
+    @Override
+    public Map<String, Object> getOrderStatusByOrderNo(String orderNo) {
+        MembershipOrder order = membershipOrderRepository.findByOrderNo(orderNo);
+        if (order == null)
+            throw new RuntimeException("会员订单不存在");
+        Map<String, Object> result = new HashMap<>();
+        result.put("orderNo", order.getOrderNo());
+        result.put("status", order.getStatus());
+        result.put("amount", order.getTotalAmount());
+        result.put("userId", order.getUserId());
+        result.put("membershipType", order.getMembershipType());
+        result.put("duration", order.getDuration());
+        result.put("paymentTime", order.getPaymentTime());
+        return result;
     }
 }

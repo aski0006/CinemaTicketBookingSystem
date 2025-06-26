@@ -15,4 +15,5 @@ public class MovieSummaryDTO {
     private String posterUrl;
     private Double rating;
     private String status;
+    private String genres;
 }

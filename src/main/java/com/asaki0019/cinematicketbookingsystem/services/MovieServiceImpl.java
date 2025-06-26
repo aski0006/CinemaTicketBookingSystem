@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.Arrays;
 
 import com.asaki0019.cinematicketbookingsystem.dto.MovieSearchResponseDTO;
 import com.asaki0019.cinematicketbookingsystem.dto.MovieSummaryDTO;
@@ -73,7 +74,16 @@ public class MovieServiceImpl implements MovieService {
         List<MovieSummaryDTO> movieSummaries = moviePage.getContent().stream()
                 .map(this::convertToMovieSummaryDTO)
                 .collect(Collectors.toList());
-        return new MovieSearchResponseDTO(moviePage.getTotalElements(), movieSummaries);
+
+        // 查询所有类型并去重
+        List<String> genres = movieRepository.findAll().stream()
+                .map(Movie::getGenre)
+                .filter(g -> g != null && !g.isEmpty())
+                .flatMap(g -> Arrays.stream(g.split("[,，\s]+"))) // 支持多类型分割
+                .distinct()
+                .collect(Collectors.toList());
+
+        return new MovieSearchResponseDTO(moviePage.getTotalElements(), movieSummaries, genres);
     }
 
     private MovieSummaryDTO convertToMovieSummaryDTO(Movie movie) {
@@ -82,19 +92,17 @@ public class MovieServiceImpl implements MovieService {
                 movie.getTitle(),
                 movie.getPosterUrl(),
                 movie.getRating(),
+                movie.getGenre(),
                 movie.getStatus());
     }
 
     @Override
-    public List<Map<String, Object>> getRecommendedMovies() {
-        // Get top 10 popular movie IDs from Redis sorted set
-        List<String> movieIds = RedisCacheUtils.zrevrange(RECOMMENDATION_POPULAR_KEY, 0, 9);
+    public List<Map<String, Object>> getRecommendedMovies(String preferredGenre) {
+        List<String> movieIds = RedisCacheUtils.zrevrange(RECOMMENDATION_POPULAR_KEY, 0, 19);
         if (movieIds == null || movieIds.isEmpty()) {
             return Collections.emptyList();
         }
-
         List<Long> ids = movieIds.stream().map(Long::valueOf).collect(Collectors.toList());
-        // 保证顺序和存在性
         return ids.stream()
                 .map(id -> movieRepository.findById(id).orElse(null))
                 .filter(movie -> movie != null)
@@ -103,10 +111,24 @@ public class MovieServiceImpl implements MovieService {
                     map.put("id", movie.getId());
                     map.put("title", movie.getTitle());
                     map.put("poster_url", movie.getPosterUrl());
-                    map.put("match_score", 1.0);
+                    map.put("genre", movie.getGenre());
+                    double baseScore = 1.0;
+                    if (preferredGenre != null && !preferredGenre.isEmpty()
+                            && preferredGenre.equalsIgnoreCase(movie.getGenre())) {
+                        map.put("match_score", baseScore + 1.0); // 偏好类别加分
+                    } else {
+                        map.put("match_score", baseScore);
+                    }
                     return map;
                 })
+                .sorted((a, b) -> Double.compare((double) b.get("match_score"), (double) a.get("match_score")))
+                .limit(10)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<Map<String, Object>> getRecommendedMovies() {
+        return getRecommendedMovies(null);
     }
 
     @Override

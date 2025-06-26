@@ -9,6 +9,7 @@ import com.asaki0019.cinematicketbookingsystem.utils.RedisCacheUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -46,8 +47,12 @@ public class OrderServiceImpl implements OrderService {
     private static final String ORDER_CACHE_PREFIX = "order:";
     private static final String SEAT_LOCK_PREFIX = "seat_lock:";
     private static final int ORDER_CACHE_MINUTES = 15;
-    private static final String CALLBACK_URL = "http://localhost:8081/api/payments/callback";
-    private static final String RETURN_URL = "http://localhost:8081/return_url";
+
+    @Value("${payment.callback.url:http://localhost:8081/api/payments/callback}")
+    private String callbackUrl;
+
+    @Value("${payment.return.url:http://localhost:8081/return_url}")
+    private String returnUrl;
 
     @Override
     @Transactional
@@ -96,7 +101,7 @@ public class OrderServiceImpl implements OrderService {
 
         // 5. 调用支付网关
         Map<String, String> extraParams = new HashMap<>();
-        extraParams.put("return_url", RETURN_URL);
+        extraParams.put("return_url", returnUrl);
 
         Map<String, Object> paymentResult = PaymentGatewayUtils.unifiedOrder(
                 PaymentGatewayUtils.PayType.ALIPAY,
@@ -104,7 +109,7 @@ public class OrderServiceImpl implements OrderService {
                 totalAmount,
                 "电影票购买",
                 "场次ID:" + orderRequest.getSessionId(),
-                CALLBACK_URL,
+                callbackUrl,
                 extraParams);
 
         // 6. 返回结果
@@ -266,5 +271,20 @@ public class OrderServiceImpl implements OrderService {
         } catch (Exception e) {
             return "二维码生成失败";
         }
+    }
+
+    @Override
+    public Map<String, Object> getOrderStatusByOrderNo(String orderNo) {
+        Order order = orderRepository.findByOrderNo(orderNo);
+        if (order == null)
+            throw new RuntimeException("订单不存在");
+        Map<String, Object> result = new HashMap<>();
+        result.put("orderNo", order.getOrderNo());
+        result.put("status", order.getStatus());
+        result.put("amount", order.getTotalAmount());
+        result.put("userId", order.getUserId());
+        result.put("sessionId", order.getSessionId());
+        result.put("paymentTime", order.getPaymentTime());
+        return result;
     }
 }

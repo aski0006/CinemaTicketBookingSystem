@@ -71,7 +71,6 @@ class MembershipOrderServiceImplTest {
         assertEquals("VIP", resp.getMembershipType());
         assertEquals("yearly", resp.getDuration());
         assertEquals("PENDING_PAYMENT", resp.getStatus());
-        assertEquals("http://pay.test", resp.getPaymentUrl());
     }
 
     @Test

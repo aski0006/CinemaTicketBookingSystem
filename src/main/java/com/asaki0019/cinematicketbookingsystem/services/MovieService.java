@@ -15,6 +15,8 @@ public interface MovieService {
 
     List<Map<String, Object>> getRecommendedMovies();
 
+    List<Map<String, Object>> getRecommendedMovies(String preferredGenre);
+
     Movie createMovie(Movie movie);
 
     Movie updateMovie(Long movieId, Movie movie);

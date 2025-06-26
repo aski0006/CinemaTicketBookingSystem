@@ -43,9 +43,6 @@ public class MembershipOrder {
     @Column(name = "payment_time")
     private LocalDateTime paymentTime;
 
-    @Column(name = "payment_url")
-    private String paymentUrl;
-
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 

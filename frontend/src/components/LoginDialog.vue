@@ -102,6 +102,12 @@ function onSubmit() {
         throw { response: { status: data.status || 401, data } }
       }
       localStorage.setItem('token', data.token)
+      if (data.user && typeof data.user.member_level !== 'undefined') {
+        localStorage.setItem('member_level', data.user.member_level)
+      }
+      if (data.user && typeof data.user.id !== 'undefined') {
+        localStorage.setItem('user_id', data.user.id)
+      }
       ElMessage.success('登录成功')
       visible.value = false
       emit('close')

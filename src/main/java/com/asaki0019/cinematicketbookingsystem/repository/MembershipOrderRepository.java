@@ -9,4 +9,7 @@ public interface MembershipOrderRepository extends JpaRepository<MembershipOrder
     MembershipOrder findByOrderNo(String orderNo);
 
     Page<MembershipOrder> findByUserId(Long userId, Pageable pageable);
+
+    MembershipOrder findTopByUserIdAndMembershipTypeAndStatusOrderByPaymentTimeDesc(Long userId, String membershipType,
+            String status);
 }

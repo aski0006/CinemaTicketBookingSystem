@@ -45,4 +45,7 @@ public class Movie {
 
     @Column(name = "status")
     private String status;
+
+    @Column(name = "genre")
+    private String genre;
 }

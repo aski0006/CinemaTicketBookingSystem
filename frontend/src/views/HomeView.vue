@@ -6,13 +6,14 @@
         <el-menu-item index="0" class="logo">CinemaBooking</el-menu-item>
         <div class="flex-grow" />
         <el-menu-item index="1">首页</el-menu-item>
-        <el-menu-item index="2">影片浏览</el-menu-item>
-        <el-menu-item index="3" @click="showLogin = true">登录</el-menu-item>
+        <el-menu-item index="2" @click="goMovieBrowse">影片浏览</el-menu-item>
+        <el-menu-item index="3" v-if="!isLoggedIn" @click="showLogin = true">登录</el-menu-item>
+        <el-menu-item index="3" v-else @click="handleLogout">退出</el-menu-item>
         <el-menu-item index="4" @click="showRegister = true">注册</el-menu-item>
       </el-menu>
     </div>
     <div v-if="showLogin || showRegister" class="modal-backdrop"></div>
-    <LoginDialog v-model="showLogin" @close="showLogin = false" @switch="handleSwitchDialog" />
+    <LoginDialog v-model="showLogin" @close="handleLoginDialogClose" @switch="handleSwitchDialog" />
     <RegisterDialog v-model="showRegister" @close="showRegister = false" @switch="handleSwitchDialog" />
 
     <!-- Hero Section，背景图片+底部渐变 -->
@@ -22,7 +23,8 @@
         <div class="hero-content container">
           <h1 class="hero-title">ASAKI CINEMA</h1>
           <p class="hero-subtitle">快来看看这些不容错过的热门影片，开启你的观影之旅！</p>
-          <el-button class="hero-cta" type="primary" size="large" round>{{ ctaButtonText }}</el-button>
+          <el-button v-if="!isLoggedIn" class="hero-cta" type="primary" size="large" round @click="showLogin = true">{{ ctaButtonText }}</el-button>
+          <div v-else class="hero-welcome">欢迎回来，祝您观影愉快！</div>
         </div>
         <div class="hero-fade-to-card"></div>
       </div>
@@ -98,8 +100,10 @@
           <div
             v-for="(plan, idx) in plans"
             :key="plan.name"
-            :class="['pricing-card', { active: activePricingIndex === idx }]"
-            @mouseenter="handlePricingMouseEnter(idx)"
+            :class="['pricing-card', { active: activePricingIndex === idx, owned: isLoggedIn && memberLevel === idx }]"
+            @mouseenter="(e) => handlePricingMouseEnter(idx, e)"
+            @mousemove="(e) => handleOwnedCardMouseMove(idx, e)"
+            @mouseleave="(e) => { handlePricingMouseLeave(); handleOwnedCardMouseLeave(idx, e) }"
           >
             <h3 class="plan-name">{{ plan.name }}</h3>
             <div class="plan-price">
@@ -107,7 +111,14 @@
               <span class="price-amount">{{ plan.prices[pricingDuration] }}</span>
               <span class="price-duration">/ {{ durationText }}</span>
             </div>
-            <el-button :type="activePricingIndex === idx ? 'primary' : 'default'" class="buy-button" round plain>{{ plan.buttonText }}</el-button>
+            <el-button
+              :type="activePricingIndex === idx ? 'primary' : 'default'"
+              class="buy-button"
+              round plain
+              @click="handleBuyClick(plan)"
+              :disabled="isPlanButtonDisabled(plan, idx)"
+              :loading="buyLoading && (plan.name.includes('VIP') || plan.name.includes('SVIP'))"
+            >{{ getPlanButtonText(plan, idx) }}</el-button>
             <el-divider />
             <ul class="plan-features">
               <li v-for="feature in plan.features" :key="feature">{{ feature }}</li>
@@ -147,18 +158,36 @@
         © 2024 StarlightCinema ASAKI CINEMA | 专注优质电影票预订服务
       </div>
     </footer>
+
+    <div
+      v-if="ownedTooltip.show"
+      class="owned-tooltip"
+      :style="{ left: ownedTooltip.x + 'px', top: ownedTooltip.y + 'px' }"
+    >已获得会员权益</div>
+
+    <el-dialog v-model="showPayWaiting" title="等待支付完成" width="350px" :close-on-click-modal="false" :show-close="false">
+      <div style="text-align:center;padding:24px 0;">
+        <el-icon style="font-size:32px;color:#1e88e5;"><i class="el-icon-loading"></i></el-icon>
+        <div style="margin-top:16px;">请在新窗口完成支付，支付成功后会员权益将自动生效。</div>
+        <div style="margin-top:8px;color:#888;font-size:13px;">如已支付可关闭此窗口。</div>
+        <el-button type="primary" style="margin-top:18px;" @click="manualCheckOrder">我已完成支付，手动确认</el-button>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import defaultMoviePng from '../assets/defaultMoviePng.webp'
 import LoginDialog from '../components/LoginDialog.vue';
 import RegisterDialog from '../components/RegisterDialog.vue';
+import { purchaseMembership } from '../api/membership'
+import service from '../api/request'
+import { ElMessage } from 'element-plus'
 const activeIndex = ref('1');
 const ctaButtonText = ref('登录网站');
 const recommendedMovies = ref([
-  { id: 1, title: '沙丘', poster_url: defaultMoviePng, rating: 4.5 },
+  { id: 1, title: '沙丘', poster_url: 'https://images.weserv.nl/?url=img3.doubanio.com/view/photo/s_ratio_poster/public/p2920455862.webp', rating: 4.5 },
   { id: 2, title: '星际穿越', poster_url: defaultMoviePng, rating: 4.9 },
   { id: 3, title: '盗梦空间', poster_url: defaultMoviePng, rating: 4.8 },
   { id: 4, title: '瞬息全宇宙', poster_url: defaultMoviePng, rating: 4.7 },
@@ -180,6 +209,8 @@ function handleMovieClick(movie) {
 
 const pricingDuration = ref('monthly'); // 'monthly', 'quarterly', 'yearly'
 const hoverIndex = ref(null);
+const ownedTooltip = ref({ show: false, x: 0, y: 0 })
+const ownedTooltipIdx = ref(null)
 
 const plans = ref([
   {
@@ -193,7 +224,7 @@ const plans = ref([
       '——'
     ],
     buttonType: 'default',
-    buttonText: '立即注册'
+    buttonText: '立即登录'
   },
   {
     name: 'VIP 会员',
@@ -228,11 +259,28 @@ const activePricingIndex = computed(() => {
   return 1; // 默认高亮VIP
 });
 
-function handlePricingMouseEnter(idx) {
-  hoverIndex.value = idx;
+function handlePricingMouseEnter(idx, e) {
+  hoverIndex.value = idx
 }
 function handlePricingMouseLeave() {
   hoverIndex.value = null;
+}
+
+function handleOwnedCardMouseMove(idx, e) {
+  if (isLoggedIn.value && memberLevel.value === idx) {
+    ownedTooltip.value = {
+      show: true,
+      x: e.clientX + 12,
+      y: e.clientY + 12
+    }
+    ownedTooltipIdx.value = idx
+  }
+}
+function handleOwnedCardMouseLeave(idx, e) {
+  if (ownedTooltipIdx.value === idx) {
+    ownedTooltip.value.show = false
+    ownedTooltipIdx.value = null
+  }
 }
 
 const durationText = computed(() => {
@@ -286,6 +334,38 @@ const testimonials = [
 
 const showLogin = ref(false)
 const showRegister = ref(false)
+const isLoggedIn = ref(false)
+const memberLevel = ref(0)
+const buyLoading = ref(false)
+const showPayWaiting = ref(false)
+const payOrderNo = ref('')
+
+function checkLoginStatus() {
+  isLoggedIn.value = !!localStorage.getItem('token')
+  if (isLoggedIn.value) {
+    // 假设登录后 member_level 存在 localStorage
+    memberLevel.value = Number(localStorage.getItem('member_level') || 0)
+  } else {
+    memberLevel.value = 0
+  }
+}
+
+function checkReturnUrlPage() {
+  if (window.location.pathname === '/return_url') {
+    // 检查是否在支付回跳页面
+    setTimeout(() => {
+      window.close();
+      // 如果window.close无效（如非弹窗），可跳转首页
+      window.location.href = '/';
+    }, 2000);
+  }
+}
+
+onMounted(() => {
+  checkLoginStatus()
+  checkReturnUrlPage()
+})
+
 function handleSwitchDialog(type) {
   if (type === 'login') {
     showRegister.value = false
@@ -294,6 +374,153 @@ function handleSwitchDialog(type) {
     showLogin.value = false
     showRegister.value = true
   }
+}
+
+function handleLoginDialogClose() {
+  showLogin.value = false
+  checkLoginStatus()
+}
+
+function handleLogout() {
+  localStorage.removeItem('token')
+  localStorage.removeItem('member_level')
+  isLoggedIn.value = false
+  memberLevel.value = 0
+  showLogin.value = false
+}
+
+const getPlanButtonText = (plan, idx) => {
+  if (memberLevel.value === 1) {
+    if (plan.name.includes('VIP') && !plan.name.includes('SVIP')) return '续费';
+    if (plan.name.includes('SVIP')) return '升级';
+  } else if (memberLevel.value === 2) {
+    if (plan.name.includes('VIP') && !plan.name.includes('SVIP')) return '不可降级';
+    if (plan.name.includes('SVIP')) return '续费';
+  }
+  return plan.buttonText;
+};
+
+const isPlanButtonDisabled = (plan, idx) => {
+  if (memberLevel.value === 2 && plan.name.includes('VIP') && !plan.name.includes('SVIP')) return true;
+  return false;
+};
+
+function handleBuyClick(plan) {
+  const token = localStorage.getItem('token')
+  if (!token) {
+    showLogin.value = true
+    return
+  }
+  const userId = localStorage.getItem('user_id')
+  if (!userId) {
+    ElMessage.error('用户信息异常，请重新登录')
+    handleLogout()
+    return
+  }
+  let membershipType = ''
+  if (plan.name.includes('VIP') && !plan.name.includes('SVIP')) membershipType = 'VIP'
+  else if (plan.name.includes('SVIP')) membershipType = 'SVIP'
+  else membershipType = 'FREE'
+  if (membershipType === 'FREE') {
+    ElMessage.info('基础会员无需购买')
+    return
+  }
+  // SVIP用户不能降级
+  if (memberLevel.value === 2 && membershipType === 'VIP') {
+    ElMessage.warning('SVIP用户不能降级为VIP')
+    return
+  }
+  // VIP升级SVIP，先查差价
+  if (memberLevel.value === 1 && membershipType === 'SVIP') {
+    service.post('/api/memberships/upgrade-price', {
+      targetType: 'SVIP',
+      targetDuration: pricingDuration.value
+    }).then(res => {
+      ElMessage.info(`升级SVIP需补差价：¥${res.upgradePrice}`)
+      // 这里可弹窗确认，确认后再发起支付
+      doPurchaseMembership(userId, membershipType, pricingDuration.value, 'ALIPAY')
+    })
+    return
+  }
+  // 普通购买/续费
+  doPurchaseMembership(userId, membershipType, pricingDuration.value, 'ALIPAY')
+}
+
+function doPurchaseMembership(userId, membershipType, duration, paymentMethod) {
+  buyLoading.value = true
+  purchaseMembership({
+    userId: Number(userId),
+    membershipType,
+    duration,
+    paymentMethod
+  }).then(res => {
+    if (res && res.paymentUrl) {
+      payOrderNo.value = res.orderNo
+      showPayWaiting.value = true
+      const payWin = window.open('', '_blank')
+      payWin.document.write(res.paymentUrl)
+      payWin.document.close()
+      pollOrderStatus(res.orderNo, userId)
+    } else {
+      ElMessage.error('下单失败，未获取到支付链接')
+    }
+  }).catch(e => {
+    ElMessage.error('下单失败，请重试')
+    console.error(e)
+  }).finally(() => {
+    buyLoading.value = false
+  })
+}
+
+function pollOrderStatus(orderNo, userId) {
+  let timer = setInterval(async () => {
+    try {
+      const res = await service.get(`/api/payments/query/${orderNo}`)
+      if (res && (res.status === 'COMPLETED' || res.status === 'TRADE_SUCCESS')) {
+        clearInterval(timer)
+        // 获取最新用户信息
+        const userRes = await service.get(`/api/users/me`)
+        if (userRes && typeof userRes.member_level !== 'undefined') {
+          localStorage.setItem('member_level', userRes.member_level)
+          memberLevel.value = userRes.member_level
+          // 强制刷新页面，确保所有会员信息实时更新
+          window.location.reload()
+        }
+        showPayWaiting.value = false
+        ElMessage.success('支付成功，会员权益已生效！')
+      }
+    } catch (e) {
+      // ignore
+    }
+  }, 10000)
+}
+
+function manualCheckOrder() {
+  if (!payOrderNo.value) return;
+  const userId = localStorage.getItem('user_id');
+  service.get(`/api/payments/query/${payOrderNo.value}`).then(res => {
+    if (res && (res.status === 'COMPLETED' || res.status === 'TRADE_SUCCESS')) {
+      // 获取最新用户信息
+      service.get(`/api/users/me`).then(userRes => {
+        if (userRes && typeof userRes.member_level !== 'undefined') {
+          console.log('[Home] 获取最新用户信息:', userRes)
+          localStorage.setItem('member_level', userRes.member_level)
+          memberLevel.value = userRes.member_level
+          window.location.reload()
+        }
+        showPayWaiting.value = false
+        ElMessage.success('支付成功，会员权益已生效！')
+      })
+    } else {
+      ElMessage.warning('暂未检测到支付完成，请稍后再试或等待自动检测。')
+    }
+  }).catch(() => {
+    ElMessage.error('订单状态查询失败，请稍后重试')
+  })
+}
+
+function goMovieBrowse() {
+  window.location.href = '/movies';
 }
 </script>
 
@@ -834,5 +1061,33 @@ function handleSwitchDialog(type) {
     border-radius: 12px;
     max-width: 100vw;
   }
+}
+
+.pricing-card.owned {
+  border: 2.5px solid #FFD700 !important;
+  box-shadow: 0 0 16px 0 rgba(255, 215, 0, 0.12);
+  position: relative;
+}
+.owned-tooltip {
+  position: fixed;
+  z-index: 9999;
+  background: #fffbe6;
+  color: #bfa100;
+  border: 1px solid #ffe58f;
+  border-radius: 6px;
+  padding: 6px 16px;
+  font-size: 15px;
+  box-shadow: 0 2px 8px rgba(255,215,0,0.10);
+  pointer-events: none;
+  white-space: nowrap;
+  font-weight: bold;
+}
+
+.hero-welcome {
+  font-size: 20px;
+  color: #fff;
+  font-weight: bold;
+  margin-top: 24px;
+  letter-spacing: 1px;
 }
 </style> 

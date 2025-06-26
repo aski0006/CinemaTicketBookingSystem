@@ -76,7 +76,7 @@ public class SessionController {
         return result;
     }
 
-    @GetMapping("/{sessionId}/seats")
+    @GetMapping("/{sessionId}/seat-map")
     public SessionSeatMapDTO getSeatMap(@PathVariable Long sessionId) {
         return sessionService.getSeatMap(sessionId);
     }

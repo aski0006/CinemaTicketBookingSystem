@@ -12,4 +12,5 @@ import java.util.List;
 public class MovieSearchResponseDTO {
     private long total;
     private List<MovieSummaryDTO> movies;
+    private List<String> genres;
 }
