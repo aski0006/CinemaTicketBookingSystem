@@ -8,6 +8,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
+import org.springframework.web.bind.MissingRequestHeaderException;
+import io.jsonwebtoken.JwtException;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.util.HashMap;
@@ -35,11 +37,24 @@ public class ExceptionHandlerUtils {
     }
 
     /**
+     * 处理认证相关异常（如缺少token、token无效等）
+     */
+    @ExceptionHandler({ MissingRequestHeaderException.class, JwtException.class })
+    public ResponseEntity<Map<String, Object>> handleAuthException(Exception ex) {
+        logger.warn("[认证异常] {}", ex.getMessage());
+        Map<String, Object> body = new HashMap<>();
+        body.put("code", 401);
+        body.put("msg", "未认证或token无效");
+        body.put("detail", ex.getMessage());
+        return new ResponseEntity<>(body, HttpStatus.UNAUTHORIZED);
+    }
+
+    /**
      * 处理所有未捕获的异常
      */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, Object>> handleException(Exception ex) {
-        logger.error("[全局异常] {}", ex.getMessage(), ex);
+        logger.error("[全局异常] {}", ex.getMessage());
         Map<String, Object> body = new HashMap<>();
         body.put("code", 500);
         body.put("msg", "服务器内部错误");

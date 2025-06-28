@@ -24,6 +24,9 @@ import com.asaki0019.cinematicketbookingsystem.dto.SeatDTO;
 import com.asaki0019.cinematicketbookingsystem.dto.SessionResponseDTO;
 import com.asaki0019.cinematicketbookingsystem.entities.*;
 import com.asaki0019.cinematicketbookingsystem.repository.*;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.asaki0019.cinematicketbookingsystem.utils.RedisCacheUtils;
 
 @Service
 public class SessionServiceImpl implements SessionService {
@@ -37,6 +40,8 @@ public class SessionServiceImpl implements SessionService {
     private OrderSeatRepository orderSeatRepository;
     @Autowired
     private HallRepository hallRepository;
+
+    private static final ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
 
     @Override
     public List<SessionResponseDTO> getSessions(Long movieId, String date) {
@@ -54,12 +59,15 @@ public class SessionServiceImpl implements SessionService {
     private SessionResponseDTO convertToSessionResponseDTO(Session session) {
         Hall hall = hallRepository.findById(session.getHallId()).orElse(null);
         HallInfoDTO hallInfoDTO = (hall != null) ? new HallInfoDTO(hall.getId(), hall.getName(), hall.getType()) : null;
-        return new SessionResponseDTO(
+        SessionResponseDTO dto = new SessionResponseDTO(
                 session.getId(),
                 session.getStartTime(),
                 session.getEndTime(),
                 session.getPrice(),
-                hallInfoDTO);
+                hallInfoDTO,
+                session.getMovieId(),
+                hall != null ? hall.getSeatLayout() : null);
+        return dto;
     }
 
     @Override
@@ -93,5 +101,28 @@ public class SessionServiceImpl implements SessionService {
         }).toList();
 
         return new SessionSeatMapDTO(sessionId, seatDTOs);
+    }
+
+    public List<SessionResponseDTO> getTodaySessions(Long movieId) {
+        LocalDate today = LocalDate.now();
+        String redisKey = "auto_sessions:" + today.toString().replace("-", "");
+        try {
+            String json = RedisCacheUtils.get(redisKey);
+            if (json != null && !json.isEmpty()) {
+                List<Session> autoSessions = objectMapper.readValue(json,
+                        objectMapper.getTypeFactory().constructCollectionType(List.class, Session.class));
+                return autoSessions.stream()
+                        .filter(s -> movieId == null || s.getMovieId().equals(movieId))
+                        .map(this::convertToSessionResponseDTO)
+                        .toList();
+            }
+        } catch (Exception e) {
+            // Redis异常，回退数据库
+        }
+        // 回退数据库
+        LocalDateTime start = today.atStartOfDay();
+        LocalDateTime end = today.plusDays(1).atStartOfDay();
+        List<Session> sessions = sessionRepository.findSessions(movieId, start, end);
+        return sessions.stream().map(this::convertToSessionResponseDTO).toList();
     }
 }

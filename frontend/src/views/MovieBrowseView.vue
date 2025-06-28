@@ -1,17 +1,11 @@
 <template>
   <div class="movie-browse-view">
-    <!-- 顶部导航栏 -->
-    <div class="nav-wrapper">
-      <el-menu mode="horizontal" :default-active="'2'" class="main-nav container" background-color="#ffffff" text-color="#212121" active-text-color="#FF4081">
-        <el-menu-item index="0" class="logo">CinemaBooking</el-menu-item>
-        <div class="flex-grow" />
-        <el-menu-item index="1" @click="goHome">首页</el-menu-item>
-        <el-menu-item index="2">影片浏览</el-menu-item>
-        <el-menu-item index="3" v-if="!isLoggedIn" @click="showLogin = true">登录</el-menu-item>
-        <el-menu-item index="3" v-else @click="handleLogout">退出</el-menu-item>
-        <el-menu-item index="4" @click="showRegister = true">注册</el-menu-item>
-      </el-menu>
-    </div>
+    <NavBar
+      :is-logged-in="isLoggedIn"
+      @show-login="showLogin = true"
+      @show-register="showRegister = true"
+      @logout="handleLogout"
+    />
     <div v-if="showLogin || showRegister" class="modal-backdrop"></div>
     <LoginDialog v-model="showLogin" @close="showLogin = false" @switch="handleSwitchDialog" />
     <RegisterDialog v-model="showRegister" @close="showRegister = false" @switch="handleSwitchDialog" />
@@ -46,7 +40,7 @@
     <!-- 影片网格 -->
     <div class="movie-grid-container">
       <div class="movie-grid">
-        <div v-for="movie in filteredMovies" :key="movie.id" class="movie-card">
+        <div v-for="movie in filteredMovies" :key="movie.id" class="movie-card" @click="showMovieDetail(movie.id)">
           <div class="card-image-wrapper">
             <img :src="movie.poster_url" class="movie-poster" :alt="movie.title" @error="handleImageError"/>
           </div>
@@ -66,6 +60,15 @@
         </el-button>
       </div>
     </div>
+    <!-- 详情弹窗 -->
+    <teleport to="body">
+      <div v-if="showDetail" class="detail-modal">
+        <div class="modal-backdrop" @click="closeDetail"></div>
+        <div class="modal-content">
+          <MovieDetailCard :movie="detailMovie" @close="closeDetail" />
+        </div>
+      </div>
+    </teleport>
     <footer class="starlight-footer">
       <div class="footer-content">
         © 2024 StarlightCinema ASAKI CINEMA | 专注优质电影票预订服务
@@ -78,8 +81,11 @@
 import { ref, computed, onMounted } from 'vue';
 import LoginDialog from '../components/LoginDialog.vue';
 import RegisterDialog from '../components/RegisterDialog.vue';
+import MovieDetailCard from '../components/MovieDetailCard.vue';
 import defaultMoviePng from '../assets/defaultMoviePng.webp';
 import { searchMovies } from '../api/movie';
+import request from '../api/request';
+import NavBar from '../components/NavBar.vue';
 
 const showLogin = ref(false);
 const showRegister = ref(false);
@@ -103,6 +109,9 @@ function handleLogout() {
 function goHome() {
   window.location.href = '/';
 }
+function goTodayMovies() {
+  window.location.href = '/today';
+}
 
 const genres = ref(['全部']);
 const selectedCategory = ref('全部');
@@ -113,14 +122,21 @@ const pageSize = ref(10);
 const totalMovies = ref(0);
 const isLoading = ref(false);
 
+const showDetail = ref(false);
+const detailMovie = ref(null);
+
 const allMoviesLoaded = computed(() => movies.value.length >= totalMovies.value && totalMovies.value > 0);
 
-// 本地类型过滤
 const filteredMovies = computed(() => {
-  if (selectedCategory.value === '全部') return movies.value;
-  return movies.value.filter(movie =>
-    movie.genres && movie.genres.split(/[ ,，|/]+/).includes(selectedCategory.value)
-  );
+  let result;
+  if (selectedCategory.value === '全部') {
+    result = movies.value;
+  } else {
+    result = movies.value.filter(movie =>
+      movie.genres && movie.genres.split(/[ ,，|/]+/).includes(selectedCategory.value)
+    );
+  }
+  return result;
 });
 
 async function fetchMovies(isLoadMore = false) {
@@ -168,6 +184,21 @@ function handleImageError(event) {
   event.target.src = defaultMoviePng;
 }
 
+// 详情弹窗相关
+async function showMovieDetail(movieId) {
+  try {
+    const res = await request.get(`/api/movies/${movieId}`);
+    detailMovie.value = res;
+    showDetail.value = true;
+  } catch (e) {
+    alert('获取影片详情失败');
+  }
+}
+function closeDetail() {
+  showDetail.value = false;
+  detailMovie.value = null;
+}
+
 onMounted(() => {
   fetchMovies();
 });
@@ -178,20 +209,6 @@ onMounted(() => {
   font-family: 'Helvetica Neue', Arial, sans-serif;
   background: #fff;
   min-height: 100vh;
-}
-.nav-wrapper {
-  border-bottom: 1px solid #e0e0e0;
-}
-.main-nav {
-  border-bottom: none !important;
-  height: 64px;
-}
-.logo {
-  font-size: 20px;
-  font-weight: bold;
-}
-.flex-grow {
-  flex-grow: 1;
 }
 .search-section {
   max-width: 600px;
@@ -353,5 +370,24 @@ onMounted(() => {
 }
 .load-more-btn:hover {
   background-color: #f50057;
+}
+.detail-modal {
+  position: fixed;
+  left: 0; top: 0; right: 0; bottom: 0;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.modal-backdrop {
+  position: fixed;
+  left: 0; top: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.35);
+  z-index: 1999;
+}
+.modal-content {
+  position: relative;
+  z-index: 2001;
+  /* 不加模糊，不加背景 */
 }
 </style> 

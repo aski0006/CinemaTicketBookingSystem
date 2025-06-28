@@ -102,14 +102,26 @@ public class RedisCacheUtils {
     public static String set(String key, String value, long expireSeconds) {
         try {
             if (isCluster) {
-                String res = jedisCluster.set(key, value, SetParams.setParams().ex(expireSeconds));
-                logger.debug("[Redis] set(cluster) key={}, expire={}s", key, expireSeconds);
-                return res;
+                if (expireSeconds > 0) {
+                    String res = jedisCluster.set(key, value, SetParams.setParams().ex(expireSeconds));
+                    logger.debug("[Redis] set(cluster) key={}, expire={}s", key, expireSeconds);
+                    return res;
+                } else {
+                    String res = jedisCluster.set(key, value);
+                    logger.debug("[Redis] set(cluster) key={}, no expire", key);
+                    return res;
+                }
             } else {
                 try (Jedis jedis = getJedis()) {
-                    String res = jedis.set(key, value, SetParams.setParams().ex(expireSeconds));
-                    logger.debug("[Redis] set key={}, expire={}s", key, expireSeconds);
-                    return res;
+                    if (expireSeconds > 0) {
+                        String res = jedis.set(key, value, SetParams.setParams().ex(expireSeconds));
+                        logger.debug("[Redis] set key={}, expire={}s", key, expireSeconds);
+                        return res;
+                    } else {
+                        String res = jedis.set(key, value);
+                        logger.debug("[Redis] set key={}, no expire", key);
+                        return res;
+                    }
                 }
             }
         } catch (Exception e) {

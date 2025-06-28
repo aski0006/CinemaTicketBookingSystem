@@ -24,6 +24,7 @@ public class Hall {
     @Column(name = "capacity")
     private Integer capacity;
 
+    @Lob
     @Column(name = "seat_layout")
     private String seatLayout;
 

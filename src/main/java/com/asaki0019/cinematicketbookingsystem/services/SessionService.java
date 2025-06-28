@@ -12,4 +12,6 @@ public interface SessionService {
     Session getSessionById(Long sessionId);
 
     SessionSeatMapDTO getSeatMap(Long sessionId);
+
+    List<SessionResponseDTO> getTodaySessions(Long movieId);
 }

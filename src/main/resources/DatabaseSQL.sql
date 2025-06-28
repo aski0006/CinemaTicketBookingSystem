@@ -34,7 +34,7 @@ CREATE TABLE IF NOT EXISTS hall (
     name VARCHAR(50) NOT NULL,
     type ENUM('STANDARD','IMAX','DOLBY','VIP') DEFAULT 'STANDARD',
     capacity SMALLINT NOT NULL,
-    seat_layout TEXT NOT NULL,
+    seat_layout LONGTEXT NOT NULL,
     screen_type VARCHAR(50)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 

@@ -18,4 +18,14 @@ public class SessionResponseDTO {
     private LocalDateTime endTime;
     private Double price;
     private HallInfoDTO hall;
+    private Long movieId;
+    private String seatLayout;
+
+    public String getSeatLayout() {
+        return seatLayout;
+    }
+
+    public void setSeatLayout(String seatLayout) {
+        this.seatLayout = seatLayout;
+    }
 }

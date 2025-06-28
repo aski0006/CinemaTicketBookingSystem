@@ -21,5 +21,9 @@ public interface MovieService {
 
     Movie updateMovie(Long movieId, Movie movie);
 
-    Movie delistMovie(Long movieId);
+    void deleteMovie(Long movieId);
+
+    Page<Movie> getTodayMovies(Pageable pageable);
+
+    Page<Movie> getMoviePage(String keyword, Pageable pageable);
 }

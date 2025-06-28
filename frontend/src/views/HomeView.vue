@@ -1,17 +1,11 @@
 <template>
   <div class="home-view">
-    <!-- Navigation -->
-    <div class="nav-wrapper">
-      <el-menu mode="horizontal" :default-active="activeIndex" class="main-nav container" background-color="#ffffff" text-color="#212121" active-text-color="#1e88e5">
-        <el-menu-item index="0" class="logo">CinemaBooking</el-menu-item>
-        <div class="flex-grow" />
-        <el-menu-item index="1">首页</el-menu-item>
-        <el-menu-item index="2" @click="goMovieBrowse">影片浏览</el-menu-item>
-        <el-menu-item index="3" v-if="!isLoggedIn" @click="showLogin = true">登录</el-menu-item>
-        <el-menu-item index="3" v-else @click="handleLogout">退出</el-menu-item>
-        <el-menu-item index="4" @click="showRegister = true">注册</el-menu-item>
-      </el-menu>
-    </div>
+    <NavBar
+      :is-logged-in="isLoggedIn"
+      @show-login="showLogin = true"
+      @show-register="showRegister = true"
+      @logout="handleLogout"
+    />
     <div v-if="showLogin || showRegister" class="modal-backdrop"></div>
     <LoginDialog v-model="showLogin" @close="handleLoginDialogClose" @switch="handleSwitchDialog" />
     <RegisterDialog v-model="showRegister" @close="showRegister = false" @switch="handleSwitchDialog" />
@@ -184,6 +178,8 @@ import RegisterDialog from '../components/RegisterDialog.vue';
 import { purchaseMembership } from '../api/membership'
 import service from '../api/request'
 import { ElMessage } from 'element-plus'
+import NavBar from '../components/NavBar.vue';
+
 const activeIndex = ref('1');
 const ctaButtonText = ref('登录网站');
 const recommendedMovies = ref([
@@ -522,6 +518,10 @@ function manualCheckOrder() {
 function goMovieBrowse() {
   window.location.href = '/movies';
 }
+
+function goTodayMovies() {
+  window.location.href = '/today';
+}
 </script>
 
 <style scoped>
@@ -536,24 +536,6 @@ function goMovieBrowse() {
   text-align: left;
   min-height: 100vh;
   background: url('https://images.unsplash.com/photo-1465101178521-c1a9136a3b99?auto=format&fit=crop&w=1200&q=80') center/cover no-repeat fixed, #ffffff;
-}
-
-.nav-wrapper {
-  border-bottom: 1px solid #e0e0e0;
-}
-
-.main-nav {
-  border-bottom: none !important;
-  height: 60px;
-}
-
-.logo {
-  font-size: 20px;
-  font-weight: bold;
-}
-
-.flex-grow {
-  flex-grow: 1;
 }
 
 .hero-section-bg {

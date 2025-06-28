@@ -80,4 +80,57 @@ public class SessionController {
     public SessionSeatMapDTO getSeatMap(@PathVariable Long sessionId) {
         return sessionService.getSeatMap(sessionId);
     }
+
+    /**
+     * 获取指定影片的场次信息
+     * /api/sessions/movie/{movieId}
+     */
+    @GetMapping("/movie/{movieId}")
+    public List<Map<String, Object>> getMovieSessions(@PathVariable Long movieId) {
+        List<SessionResponseDTO> sessions = sessionService.getSessions(movieId, null);
+        return sessions.stream().map(session -> {
+            Map<String, Object> sessionMap = new HashMap<>();
+            sessionMap.put("id", session.getId());
+            sessionMap.put("startTime", session.getStartTime());
+            sessionMap.put("endTime", session.getEndTime());
+            sessionMap.put("price", session.getPrice());
+            sessionMap.put("hallName", session.getHall() != null ? session.getHall().getName() : "未知影厅");
+            sessionMap.put("movieId", session.getMovieId());
+
+            // 计算场次状态：根据座位占用情况
+            try {
+                SessionSeatMapDTO seatMap = sessionService.getSeatMap(session.getId());
+                long totalSeats = seatMap.getSeats().size();
+                long occupiedSeats = seatMap.getSeats().stream()
+                        .filter(seat -> "OCCUPIED".equals(seat.getStatus()))
+                        .count();
+
+                String status;
+                if (occupiedSeats == 0) {
+                    status = "AVAILABLE";
+                } else if (occupiedSeats >= totalSeats) {
+                    status = "FULL";
+                } else {
+                    status = "AVAILABLE";
+                }
+                sessionMap.put("status", status);
+                sessionMap.put("availableSeats", totalSeats - occupiedSeats);
+                sessionMap.put("totalSeats", totalSeats);
+            } catch (Exception e) {
+                sessionMap.put("status", "AVAILABLE");
+                sessionMap.put("availableSeats", 0);
+                sessionMap.put("totalSeats", 0);
+            }
+
+            return sessionMap;
+        }).toList();
+    }
+
+    /**
+     * 获取今日所有场次（优先查Redis）
+     */
+    @GetMapping("/today")
+    public List<SessionResponseDTO> getTodaySessions(@RequestParam(required = false) Long movieId) {
+        return sessionService.getTodaySessions(movieId);
+    }
 }

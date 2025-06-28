@@ -7,6 +7,9 @@ import com.asaki0019.cinematicketbookingsystem.utils.JwtTokenUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import com.asaki0019.cinematicketbookingsystem.dto.SessionResponseDTO;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 import java.util.List;
 import java.util.Map;
@@ -57,5 +60,21 @@ public class AdminSessionController {
     public ResponseEntity<SeatMapResponse> getSessionSeatStatus(@PathVariable Long sessionId) {
         SeatMapResponse seatMap = adminSessionService.getSessionSeatStatus(sessionId);
         return ResponseEntity.ok(seatMap);
+    }
+
+    /**
+     * 自动排片
+     */
+    @PostMapping("/auto-arrange")
+    public int autoArrangeSessions(@RequestBody List<Long> todayMovieIds) {
+        return adminSessionService.autoArrangeSessions(todayMovieIds);
+    }
+
+    /**
+     * 获取今日所有场次
+     */
+    @GetMapping("/today")
+    public List<SessionResponseDTO> getTodaySessions() {
+        return adminSessionService.getTodaySessions();
     }
 }

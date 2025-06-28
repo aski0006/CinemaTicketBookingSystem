@@ -7,4 +7,6 @@ public interface HallService {
     List<Hall> getAllHalls();
 
     Hall getHallById(Long id);
+
+    Hall updateHall(Hall hall);
 }

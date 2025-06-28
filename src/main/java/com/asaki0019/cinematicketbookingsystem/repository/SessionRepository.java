@@ -17,6 +17,8 @@ public interface SessionRepository extends JpaRepository<Session, Long> {
 
     List<Session> findByMovieIdAndStartTimeBetween(Long movieId, LocalDateTime start, LocalDateTime end);
 
+    List<Session> findByHallIdAndStartTimeBetween(Long hallId, LocalDateTime start, LocalDateTime end);
+
     @Query("SELECT s FROM Session s WHERE (:movieId IS NULL OR s.movieId = :movieId) AND (:startDate IS NULL OR s.startTime >= :startDate) AND (:endDate IS NULL OR s.startTime < :endDate)")
     List<Session> findSessions(@Param("movieId") Long movieId, @Param("startDate") LocalDateTime startDate,
             @Param("endDate") LocalDateTime endDate);

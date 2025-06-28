@@ -27,6 +27,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/api/**",
+                                "/admin/**",
                                 "/error",
                                 "/test-natapp.html",
                                 "/favicon.ico",
@@ -60,7 +61,6 @@ public class SecurityConfig {
         return (request, response, authException) -> {
             String msg = String.format("[Security] 未认证访问被拦截: %s %s", request.getMethod(), request.getRequestURI());
             LogSystem.logLevel(LogSystem.LogLevel.WARN, msg);
-            System.out.println(msg);
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             response.setContentType("application/json;charset=UTF-8");
             response.getWriter().write("{\"error\":\"未认证，禁止访问\"}");

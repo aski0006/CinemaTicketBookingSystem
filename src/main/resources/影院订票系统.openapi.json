@@ -1453,12 +1453,62 @@
       }
     },
     "/admin/movies": {
+      "get": {
+        "summary": "分页查询电影（后台管理）",
+        "description": "支持按标题模糊搜索，分页返回电影列表。",
+        "tags": [
+          "电影",
+          "后台"
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "页码(默认1)",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "每页数量(默认10)",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "keyword",
+            "in": "query",
+            "description": "标题关键词",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "返回电影分页数据",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MovieSearchResponseDTO"
+                }
+              }
+            }
+          }
+        }
+      },
       "post": {
         "summary": "创建电影信息",
-        "deprecated": false,
-        "description": "添加新上映电影信息",
-        "tags": [],
-        "parameters": [],
+        "description": "添加新电影（后台管理）",
+        "tags": [
+          "电影",
+          "后台"
+        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -1470,44 +1520,24 @@
         },
         "responses": {
           "201": {
-            "description": "电影创建成功",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Movie"
-                }
-              }
-            },
-            "headers": {}
-          },
-          "409": {
-            "description": "电影已存在",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "headers": {}
+            "description": "电影创建成功"
           }
-        },
-        "security": []
+        }
       }
     },
     "/admin/movies/{movieId}": {
       "put": {
         "summary": "更新电影信息",
-        "deprecated": false,
-        "description": "修改电影基本信息或状态",
-        "tags": [],
+        "description": "修改电影基本信息或状态（后台管理）",
+        "tags": [
+          "电影",
+          "后台"
+        ],
         "parameters": [
           {
             "name": "movieId",
             "in": "path",
-            "description": "",
             "required": true,
-            "example": 0,
             "schema": {
               "type": "integer"
             }
@@ -1517,58 +1547,39 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "properties": {}
+                "$ref": "#/components/schemas/Movie"
               }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "更新成功",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Movie"
-                }
-              }
-            },
-            "headers": {}
+            "description": "更新成功"
           }
-        },
-        "security": []
+        }
       },
       "delete": {
-        "summary": "下架电影",
-        "deprecated": false,
-        "description": "将电影状态设置为下架",
-        "tags": [],
+        "summary": "删除电影",
+        "description": "永久删除电影（后台管理）",
+        "tags": [
+          "电影",
+          "后台"
+        ],
         "parameters": [
           {
             "name": "movieId",
             "in": "path",
-            "description": "",
             "required": true,
-            "example": 0,
             "schema": {
               "type": "integer"
             }
           }
         ],
         "responses": {
-          "200": {
-            "description": "下架成功",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Movie"
-                }
-              }
-            },
-            "headers": {}
+          "204": {
+            "description": "删除成功"
           }
-        },
-        "security": []
+        }
       }
     },
     "/admin/reviews": {
@@ -2145,6 +2156,150 @@
                   "error": "INVALID_PARAMS",
                   "message": "参数不合法"
                 }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/movies/today": {
+      "post": {
+        "summary": "设置今日上映电影",
+        "description": "管理员设置今日上映电影，body为电影ID数组。",
+        "tags": [
+          "电影",
+          "后台"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "integer"
+                }
+              },
+              "example": [
+                1,
+                5,
+                8,
+                12
+              ]
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "设置成功"
+          }
+        }
+      },
+      "get": {
+        "summary": "获取今日上映电影ID列表",
+        "description": "管理员获取当前今日上映电影ID数组。",
+        "tags": [
+          "电影",
+          "后台"
+        ],
+        "responses": {
+          "200": {
+            "description": "返回今日上映电影ID数组",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "integer"
+                  }
+                },
+                "example": [
+                  1,
+                  5,
+                  8,
+                  12
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/movies/today": {
+      "get": {
+        "summary": "获取今日上映电影详情",
+        "description": "分页获取管理员设置的今日上映电影详情列表。",
+        "tags": [
+          "电影"
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "页码(默认1)",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "每页数量(默认10)",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "返回今日上映电影分页数据",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MovieSearchResponseDTO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/sessions/auto-arrange": {
+      "post": {
+        "summary": "自动排片",
+        "description": "为今日上映电影自动安排场次，评分高优先，黄金时段优先，避免同厅时间冲突。body为电影ID数组。返回安排成功的场次数。",
+        "tags": [
+          "场次",
+          "后台"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "integer"
+                }
+              },
+              "example": [
+                1,
+                5,
+                8,
+                12
+              ]
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "安排成功的场次数",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "integer"
+                },
+                "example": 5
               }
             }
           }

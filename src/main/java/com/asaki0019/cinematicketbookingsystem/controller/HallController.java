@@ -21,4 +21,10 @@ public class HallController {
     public Hall getHallById(@PathVariable Long hallId) {
         return hallService.getHallById(hallId);
     }
+
+    @PutMapping("/{hallId}")
+    public Hall updateHall(@PathVariable Long hallId, @RequestBody Hall hall) {
+        hall.setId(hallId);
+        return hallService.updateHall(hall);
+    }
 }

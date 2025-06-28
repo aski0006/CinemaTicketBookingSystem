@@ -162,11 +162,18 @@ public class MovieServiceImpl implements MovieService {
     }
 
     @Override
-    public Movie delistMovie(Long movieId) {
-        // To be implemented for admin
-        Movie movie = movieRepository.findById(movieId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Movie not found"));
-        movie.setStatus("OFF");
-        return movieRepository.save(movie);
+    public void deleteMovie(Long movieId) {
+        movieRepository.deleteById(movieId);
+    }
+
+    @Override
+    public Page<Movie> getTodayMovies(Pageable pageable) {
+        java.time.LocalDate today = java.time.LocalDate.now();
+        return movieRepository.findByReleaseDateAndStatus(today, "SHOWING", pageable);
+    }
+
+    @Override
+    public Page<Movie> getMoviePage(String keyword, Pageable pageable) {
+        return movieRepository.findByTitleContaining(keyword, pageable);
     }
 }

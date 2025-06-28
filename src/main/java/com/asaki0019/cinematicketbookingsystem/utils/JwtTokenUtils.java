@@ -99,6 +99,7 @@ public class JwtTokenUtils {
             Claims claims = parseToken(token);
             return claims.getExpiration().after(new Date());
         } catch (JwtException | IllegalArgumentException e) {
+            // 不打印堆栈
             return false;
         }
     }
