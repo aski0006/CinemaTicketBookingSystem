@@ -1,0 +1,330 @@
+[
+    {
+        "seatStatus": [
+            [
+                {
+                    "type": "NULL"
+                },
+                {
+                    "type": "STANDARD",
+                    "status": "AVAILABLE"
+                },
+                {
+                    "type": "STANDARD",
+                    "status": "AVAILABLE"
+                },
+                {
+                    "type": "STANDARD",
+                    "status": "AVAILABLE"
+                },
+                {
+                    "type": "STANDARD",
+                    "status": "AVAILABLE"
+                },
+                {
+                    "type": "STANDARD",
+                    "status": "AVAILABLE"
+                },
+                {
+                    "type": "STANDARD",
+                    "status": "AVAILABLE"
+                },
+                {
+                    "type": "STANDARD",
+                    "status": "AVAILABLE"
+                },
+                {
+                    "type": "STANDARD",
+                    "status": "LOCKED"
+                },
+                {
+                    "type": "NULL"
+                }
+            ],
+            [
+                {
+                    "type": "STANDARD",
+                    "status": "AVAILABLE"
+                },
+                {
+                    "type": "STANDARD",
+                    "status": "AVAILABLE"
+                },
+                {
+                    "type": "STANDARD",
+                    "status": "AVAILABLE"
+                },
+                {
+                    "type": "NULL"
+                },
+                {
+                    "type": "NULL"
+                },
+                {
+                    "type": "NULL"
+                },
+                {
+                    "type": "NULL"
+                },
+                {
+                    "type": "STANDARD",
+                    "status": "AVAILABLE"
+                },
+                {
+                    "type": "STANDARD",
+                    "status": "LOCKED"
+                },
+                {
+                    "type": "STANDARD",
+                    "status": "AVAILABLE"
+                }
+            ],
+            [
+                {
+                    "type": "STANDARD",
+                    "status": "AVAILABLE"
+                },
+                {
+                    "type": "STANDARD",
+                    "status": "AVAILABLE"
+                },
+                {
+                    "type": "NULL"
+                },
+                {
+                    "type": "VIP",
+                    "status": "AVAILABLE"
+                },
+                {
+                    "type": "VIP",
+                    "status": "AVAILABLE"
+                },
+                {
+                    "type": "VIP",
+                    "status": "AVAILABLE"
+                },
+                {
+                    "type": "VIP",
+                    "status": "AVAILABLE"
+                },
+                null,
+                {
+                    "type": "STANDARD",
+                    "status": "AVAILABLE"
+                },
+                {
+                    "type": "STANDARD",
+                    "status": "AVAILABLE"
+                }
+            ],
+            [
+                {
+                    "type": "STANDARD",
+                    "status": "AVAILABLE"
+                },
+                {
+                    "type": "STANDARD",
+                    "status": "AVAILABLE"
+                },
+                {
+                    "type": "NULL"
+                },
+                {
+                    "type": "NULL"
+                },
+                {
+                    "type": "NULL"
+                },
+                {
+                    "type": "NULL"
+                },
+                {
+                    "type": "NULL"
+                },
+                {
+                    "type": "NULL"
+                },
+                {
+                    "type": "STANDARD",
+                    "status": "AVAILABLE"
+                },
+                {
+                    "type": "STANDARD",
+                    "status": "AVAILABLE"
+                }
+            ],
+            [
+                {
+                    "type": "STANDARD",
+                    "status": "AVAILABLE"
+                },
+                {
+                    "type": "STANDARD",
+                    "status": "AVAILABLE"
+                },
+                {
+                    "type": "NULL"
+                },
+                {
+                    "type": "NULL"
+                },
+                {
+                    "type": "VIP",
+                    "status": "AVAILABLE"
+                },
+                {
+                    "type": "VIP",
+                    "status": "LOCKED"
+                },
+                {
+                    "type": "NULL"
+                },
+                {
+                    "type": "NULL"
+                },
+                {
+                    "type": "STANDARD",
+                    "status": "AVAILABLE"
+                },
+                {
+                    "type": "STANDARD",
+                    "status": "AVAILABLE"
+                }
+            ],
+            [
+                {
+                    "type": "STANDARD",
+                    "status": "AVAILABLE"
+                },
+                {
+                    "type": "STANDARD",
+                    "status": "AVAILABLE"
+                },
+                {
+                    "type": "NULL"
+                },
+                {
+                    "type": "VIP",
+                    "status": "AVAILABLE"
+                },
+                {
+                    "type": "VIP",
+                    "status": "AVAILABLE"
+                },
+                {
+                    "type": "VIP",
+                    "status": "AVAILABLE"
+                },
+                {
+                    "type": "VIP",
+                    "status": "AVAILABLE"
+                },
+                {
+                    "type": "NULL"
+                },
+                {
+                    "type": "STANDARD",
+                    "status": "AVAILABLE"
+                },
+                {
+                    "type": "STANDARD",
+                    "status": "AVAILABLE"
+                }
+            ],
+            [
+                {
+                    "type": "STANDARD",
+                    "status": "AVAILABLE"
+                },
+                {
+                    "type": "STANDARD",
+                    "status": "AVAILABLE"
+                },
+                {
+                    "type": "NULL"
+                },
+                {
+                    "type": "VIP",
+                    "status": "AVAILABLE"
+                },
+                {
+                    "type": "VIP",
+                    "status": "AVAILABLE"
+                },
+                {
+                    "type": "VIP",
+                    "status": "AVAILABLE"
+                },
+                {
+                    "type": "VIP",
+                    "status": "AVAILABLE"
+                },
+                {
+                    "type": "NULL"
+                },
+                {
+                    "type": "STANDARD",
+                    "status": "AVAILABLE"
+                },
+                {
+                    "type": "STANDARD",
+                    "status": "LOCKED"
+                }
+            ],
+            [
+                {
+                    "type": "STANDARD",
+                    "status": "LOCKED"
+                },
+                {
+                    "type": "STANDARD",
+                    "status": "LOCKED"
+                },
+                {
+                    "type": "NULL"
+                },
+                {
+                    "type": "VIP",
+                    "status": "AVAILABLE"
+                },
+                {
+                    "type": "VIP",
+                    "status": "AVAILABLE"
+                },
+                {
+                    "type": "VIP",
+                    "status": "AVAILABLE"
+                },
+                {
+                    "type": "VIP",
+                    "status": "AVAILABLE"
+                },
+                {
+                    "type": "NULL"
+                },
+                {
+                    "type": "STANDARD",
+                    "status": "AVAILABLE"
+                },
+                {
+                    "type": "STANDARD",
+                    "status": "LOCKED"
+                }
+            ]
+        ],
+        "price": 50.0,
+        "availableSeats": 49,
+        "hall": {
+            "type": "STANDARD",
+            "id": 1,
+            "name": "1号厅"
+        },
+        "movieId": 4,
+        "startTime": "2025-06-28T18:00:00",
+        "id": -1,
+        "endTime": "2025-06-28T19:50:00",
+        "occupiedSeats": 0,
+        "seatLayout": "[[{\"type\":\"NULL\"},{\"type\":\"STANDARD\"},{\"type\":\"STANDARD\"},{\"type\":\"STANDARD\"},{\"type\":\"STANDARD\"},{\"type\":\"STANDARD\"},{\"type\":\"STANDARD\"},{\"type\":\"STANDARD\"},{\"type\":\"STANDARD\"},{\"type\":\"NULL\"}],[{\"type\":\"STANDARD\"},{\"type\":\"STANDARD\"},{\"type\":\"STANDARD\"},{\"type\":\"NULL\"},{\"type\":\"NULL\"},{\"type\":\"NULL\"},{\"type\":\"NULL\"},{\"type\":\"STANDARD\"},{\"type\":\"STANDARD\"},{\"type\":\"STANDARD\"}],[{\"type\":\"STANDARD\"},{\"type\":\"STANDARD\"},{\"type\":\"NULL\"},{\"type\":\"VIP\"},{\"type\":\"VIP\"},{\"type\":\"VIP\"},{\"type\":\"VIP\"},null,{\"type\":\"STANDARD\"},{\"type\":\"STANDARD\"}],[{\"type\":\"STANDARD\"},{\"type\":\"STANDARD\"},{\"type\":\"NULL\"},{\"type\":\"NULL\"},{\"type\":\"NULL\"},{\"type\":\"NULL\"},{\"type\":\"NULL\"},{\"type\":\"NULL\"},{\"type\":\"STANDARD\"},{\"type\":\"STANDARD\"}],[{\"type\":\"STANDARD\"},{\"type\":\"STANDARD\"},{\"type\":\"NULL\"},{\"type\":\"NULL\"},{\"type\":\"VIP\"},{\"type\":\"VIP\"},{\"type\":\"NULL\"},{\"type\":\"NULL\"},{\"type\":\"STANDARD\"},{\"type\":\"STANDARD\"}],[{\"type\":\"STANDARD\"},{\"type\":\"STANDARD\"},{\"type\":\"NULL\"},{\"type\":\"VIP\"},{\"type\":\"VIP\"},{\"type\":\"VIP\"},{\"type\":\"VIP\"},{\"type\":\"NULL\"},{\"type\":\"STANDARD\"},{\"type\":\"STANDARD\"}],[{\"type\":\"STANDARD\"},{\"type\":\"STANDARD\"},{\"type\":\"NULL\"},{\"type\":\"VIP\"},{\"type\":\"VIP\"},{\"type\":\"VIP\"},{\"type\":\"VIP\"},{\"type\":\"NULL\"},{\"type\":\"STANDARD\"},{\"type\":\"STANDARD\"}],[{\"type\":\"STANDARD\"},{\"type\":\"STANDARD\"},{\"type\":\"NULL\"},{\"type\":\"VIP\"},{\"type\":\"VIP\"},{\"type\":\"VIP\"},{\"type\":\"VIP\"},{\"type\":\"NULL\"},{\"type\":\"STANDARD\"},{\"type\":\"STANDARD\"}]]",
+        "totalSeats": 56
+    }
+]

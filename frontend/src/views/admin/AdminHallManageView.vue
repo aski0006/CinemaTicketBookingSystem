@@ -63,7 +63,8 @@
         </el-dialog>
         <!-- 座位管理弹窗 -->
         <el-dialog v-model="showSeatDialog" title="座位管理" width="800px">
-          <SeatLayoutEditor v-model:layout="seatEdit.layout" @save="saveSeatLayout" @close="showSeatDialog = false" />
+          <div>弹窗测试内容</div>
+          <SeatLayoutEditor v-model="seatEditLayout" @save="saveSeatLayout" @close="showSeatDialog = false" />
         </el-dialog>
       </el-card>
       <el-card class="footer-card" shadow="never">
@@ -104,6 +105,7 @@ const seatEdit = reactive({
   id: null,
   layout: ''
 });
+const seatEditLayout = ref('');
 
 const batchRows = ref(8);
 const batchCols = ref(10);
@@ -163,13 +165,16 @@ function seatLayoutSummary(layout) {
 }
 
 function openSeatDialog(row) {
+  console.log('openSeatDialog', row);
   seatEdit.id = row.id;
-  seatEdit.layout = row.seatLayout || '';
+  seatEditLayout.value = typeof row.seatLayout === 'string' ? row.seatLayout : '';
   showSeatDialog.value = true;
+  console.log(showSeatDialog.value)
   loadTemplates();
 }
 
 function saveSeatLayout() {
+  seatEdit.layout = seatEditLayout.value;
   if (dialogMode.value === 'edit') {
     form.seatLayout = seatEdit.layout;
     // 自动统计非空座位数
@@ -263,7 +268,7 @@ function saveSeatTemplate() {
 }
 
 async function loadTemplates() {
-  const context = import.meta.glob('/frontend/hall_json/*.json', { query: '?raw', import: 'default' });
+  const context = import.meta.glob('@/frontend/hall_json/*.json', { query: '?raw', import: 'default' });
   importTemplates.value = [];
   for (const path in context) {
     const name = path.split('/').pop();

@@ -50,12 +50,12 @@
   </div>
 </template>
 <script setup>
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, onMounted } from 'vue';
 import { ElMessage } from 'element-plus';
 const props = defineProps({
-  layout: { type: String, default: '' }
+  modelValue: { type: String, default: '' }
 });
-const emit = defineEmits(['update:layout', 'save', 'close']);
+const emit = defineEmits(['update:modelValue', 'save', 'close']);
 const batchRows = ref(8);
 const batchCols = ref(10);
 const batchType = ref('STANDARD');
@@ -64,20 +64,21 @@ const importTemplateName = ref('');
 const seatRows = computed({
   get() {
     try {
-      const arr = JSON.parse(props.layout || '[]');
-      return arr.map(row => row.map(cell => {
+      if (!props.modelValue) return [];
+      const arr = JSON.parse(props.modelValue);
+      return Array.isArray(arr) ? arr.map(row => Array.isArray(row) ? row.map(cell => {
         if (typeof cell === 'object' && cell !== null) return cell;
         if (cell === 1) return { type: 'STANDARD' };
         if (cell === 2) return { type: 'VIP' };
         if (cell === 3) return { type: 'NULL' };
         return { type: 'NULL' };
-      }));
+      }) : []) : [];
     } catch {
       return [];
     }
   },
   set(val) {
-    emit('update:layout', JSON.stringify(val));
+    emit('update:modelValue', JSON.stringify(val));
   }
 });
 function generateBatchLayout() {
@@ -126,7 +127,7 @@ function setSeatType(type) {
 }
 function isSelected(i, j) { return typeMenu.value.visible && typeMenu.value.i === i && typeMenu.value.j === j; }
 function saveSeatTemplate() {
-  let data = props.layout;
+  let data = props.modelValue;
   if (!data) {
     ElMessage.warning('当前没有可保存的座位布局');
     return;
@@ -143,7 +144,7 @@ function saveSeatTemplate() {
   ElMessage.success('模板已导出为json文件');
 }
 async function loadTemplates() {
-  const context = import.meta.glob('/frontend/hall_json/*.json', { query: '?raw', import: 'default' });
+  const context = import.meta.glob('@/frontend/hall_json/*.json', { query: '?raw', import: 'default' });
   importTemplates.value = [];
   for (const path in context) {
     const name = path.split('/').pop();
@@ -155,17 +156,17 @@ async function handleImportTemplate() {
     ElMessage.warning('请选择模板');
     return;
   }
-  const context = import.meta.glob('/frontend/hall_json/*.json', { query: '?raw', import: 'default' });
+  const context = import.meta.glob('@/frontend/hall_json/*.json', { query: '?raw', import: 'default' });
   const path = importTemplates.value.find(t => t.name === importTemplateName.value)?.path;
   if (!path) return;
   const loader = context[path];
   if (loader) {
     const json = await loader();
-    emit('update:layout', json);
+    emit('update:modelValue', json);
     ElMessage.success('模板已导入');
   }
 }
-watch(() => props.layout, () => {}, { immediate: true });
+watch(() => props.modelValue, () => {}, { immediate: true });
 onMounted(() => { loadTemplates(); });
 </script>
 <style scoped>

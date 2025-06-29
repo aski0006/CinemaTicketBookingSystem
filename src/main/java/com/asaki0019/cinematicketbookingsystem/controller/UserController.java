@@ -10,16 +10,34 @@ import org.springframework.web.server.ResponseStatusException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import com.asaki0019.cinematicketbookingsystem.dto.UserResponseDTO;
+import com.asaki0019.cinematicketbookingsystem.services.OrderService;
+import com.asaki0019.cinematicketbookingsystem.services.SessionService;
+import com.asaki0019.cinematicketbookingsystem.entities.Movie;
+import com.asaki0019.cinematicketbookingsystem.repository.MovieRepository;
+import com.asaki0019.cinematicketbookingsystem.repository.OrderRepository;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/users")
 public class UserController {
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private OrderService orderService;
+
+    @Autowired
+    private SessionService sessionService;
+
+    @Autowired
+    private MovieRepository movieRepository;
+
+    @Autowired
+    private OrderRepository orderRepository;
 
     /**
      * 用户注册
@@ -97,5 +115,61 @@ public class UserController {
         dto.setStatus(dbUser.getStatus());
         dto.setCreateTime(dbUser.getCreateTime());
         return ResponseEntity.ok(dto);
+    }
+
+    @GetMapping("/my-today-sessions")
+    public Object getMyTodaySessions(@RequestHeader(name = "Authorization", required = false) String token) {
+        if (token == null || !token.startsWith("Bearer ")) {
+            return List.of();
+        }
+        token = token.substring(7);
+        if (!com.asaki0019.cinematicketbookingsystem.utils.JwtTokenUtils.validateToken(token)) {
+            return List.of();
+        }
+        Long userId = null;
+        try {
+            userId = com.asaki0019.cinematicketbookingsystem.utils.JwtTokenUtils.getUserFromToken(token).getId();
+        } catch (Exception e) {
+            return List.of();
+        }
+        if (userId == null)
+            return List.of();
+        java.time.LocalDate today = java.time.LocalDate.now();
+        java.time.LocalDateTime start = today.atStartOfDay();
+        java.time.LocalDateTime end = today.plusDays(1).atStartOfDay();
+        java.util.List<com.asaki0019.cinematicketbookingsystem.entities.Order> orders = orderRepository
+                .findByUserId(userId).stream()
+                .filter(o -> o.getStatus() != null && !"CANCELLED".equals(o.getStatus())
+                        && !"FAILED".equals(o.getStatus()))
+                .filter(o -> o.getCreateTime() != null && !o.getCreateTime().isBefore(start)
+                        && o.getCreateTime().isBefore(end))
+                .toList();
+        java.util.Set<Long> sessionIds = orders.stream()
+                .map(com.asaki0019.cinematicketbookingsystem.entities.Order::getSessionId)
+                .collect(java.util.stream.Collectors.toSet());
+        java.util.List<Object> result = new java.util.ArrayList<>();
+        for (Long sessionId : sessionIds) {
+            com.asaki0019.cinematicketbookingsystem.entities.Session session = null;
+            try {
+                session = sessionService.getSessionByIdWithRedis(sessionId);
+            } catch (Exception ignore) {
+            }
+            if (session != null) {
+                com.asaki0019.cinematicketbookingsystem.entities.Movie movie = null;
+                try {
+                    movie = movieRepository.findById(session.getMovieId()).orElse(null);
+                } catch (Exception ignore) {
+                }
+                java.util.Map<String, Object> map = new java.util.HashMap<>();
+                map.put("id", session.getId());
+                map.put("movieTitle", movie != null ? movie.getTitle() : "未知影片");
+                map.put("startTime", session.getStartTime());
+                map.put("endTime", session.getEndTime());
+                map.put("hallName", "" + session.getHallId());
+                map.put("price", session.getPrice());
+                result.add(map);
+            }
+        }
+        return result;
     }
 }

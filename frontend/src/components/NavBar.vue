@@ -6,6 +6,7 @@
       <el-menu-item index="1" @click="goHome">首页</el-menu-item>
       <el-menu-item index="2" @click="goBrowse">影片浏览</el-menu-item>
       <el-menu-item index="3" @click="goToday">今日上映</el-menu-item>
+      <el-menu-item index="6" v-if="isLoggedIn" @click="goProfile">个人中心</el-menu-item>
       <el-menu-item index="4" v-if="!isLoggedIn" @click="$emit('show-login')">登录</el-menu-item>
       <el-menu-item index="4" v-else @click="$emit('logout')">退出</el-menu-item>
       <el-menu-item index="5" @click="$emit('show-register')">注册</el-menu-item>
@@ -31,6 +32,9 @@ function goBrowse() {
 }
 function goToday() {
   window.location.href = '/today';
+}
+function goProfile() {
+  window.location.href = '/user/profile';
 }
 </script>
 <style scoped>

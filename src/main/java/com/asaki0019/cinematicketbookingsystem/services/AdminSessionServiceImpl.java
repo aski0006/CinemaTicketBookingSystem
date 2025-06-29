@@ -70,6 +70,11 @@ public class AdminSessionServiceImpl implements AdminSessionService {
                 autoSessions.add(session);
                 String newJson = objectMapper.writeValueAsString(autoSessions);
                 RedisCacheUtils.set(redisKey, newJson, 24 * 3600);
+                // 初始化座位状态到Redis
+                Hall hall = hallRepository.findById(session.getHallId()).orElse(null);
+                if (hall != null) {
+                    initSessionSeatsInRedis(session, hall);
+                }
                 return session;
             }
         } catch (Exception e) {
@@ -78,7 +83,13 @@ public class AdminSessionServiceImpl implements AdminSessionService {
         if (!com.asaki0019.cinematicketbookingsystem.utils.ValidationUtils.validateSession(session)) {
             throw new IllegalArgumentException("场次参数不合法");
         }
-        return adminSessionRepository.save(session);
+        Session saved = adminSessionRepository.save(session);
+        // 初始化座位状态到Redis
+        Hall hall = hallRepository.findById(saved.getHallId()).orElse(null);
+        if (hall != null) {
+            initSessionSeatsInRedis(saved, hall);
+        }
+        return saved;
     }
 
     @Override
@@ -106,6 +117,11 @@ public class AdminSessionServiceImpl implements AdminSessionService {
                 if (updated) {
                     String newJson = objectMapper.writeValueAsString(autoSessions);
                     RedisCacheUtils.set(redisKey, newJson, 24 * 3600);
+                    // 初始化座位状态到Redis
+                    Hall hall = hallRepository.findById(session.getHallId()).orElse(null);
+                    if (hall != null) {
+                        initSessionSeatsInRedis(session, hall);
+                    }
                     return session;
                 }
             }
@@ -116,7 +132,13 @@ public class AdminSessionServiceImpl implements AdminSessionService {
             throw new IllegalArgumentException("场次参数不合法");
         }
         session.setId(sessionId);
-        return adminSessionRepository.save(session);
+        Session saved = adminSessionRepository.save(session);
+        // 初始化座位状态到Redis
+        Hall hall = hallRepository.findById(saved.getHallId()).orElse(null);
+        if (hall != null) {
+            initSessionSeatsInRedis(saved, hall);
+        }
+        return saved;
     }
 
     @Override
@@ -306,6 +328,13 @@ public class AdminSessionServiceImpl implements AdminSessionService {
             session.setPrice(50.0);
             autoSessions.add(session);
             arranged++;
+            // 初始化座位状态
+            Hall hall = hallRepository.findById(hallId).orElse(null);
+            if (hall != null) {
+                Long tempId = session.getId() != null ? session.getId() : -(i + 1L);
+                session.setId(tempId);
+                initSessionSeatsInRedis(session, hall);
+            }
         }
         try {
             String json = objectMapper.writeValueAsString(autoSessions);
@@ -396,6 +425,33 @@ public class AdminSessionServiceImpl implements AdminSessionService {
             }
         } catch (Exception e) {
             throw new RuntimeException("自动排片同步数据库失败", e);
+        }
+    }
+
+    private void initSessionSeatsInRedis(Session session, Hall hall) {
+        if (hall == null || hall.getSeatLayout() == null)
+            return;
+        try {
+            String layoutJson = hall.getSeatLayout();
+            List<List<Map<String, Object>>> seatStatus = new java.util.ArrayList<>();
+            List<List<Map<String, Object>>> layout = objectMapper.readValue(layoutJson, List.class);
+            for (List<Map<String, Object>> row : layout) {
+                List<Map<String, Object>> statusRow = new java.util.ArrayList<>();
+                for (Map<String, Object> cell : row) {
+                    if (cell != null && cell.get("type") != null && !"NULL".equals(cell.get("type"))) {
+                        Map<String, Object> seat = new java.util.HashMap<>(cell);
+                        seat.put("status", "AVAILABLE");
+                        statusRow.add(seat);
+                    } else {
+                        statusRow.add(cell);
+                    }
+                }
+                seatStatus.add(statusRow);
+            }
+            String redisKey = "session_seats:" + session.getId();
+            RedisCacheUtils.set(redisKey, objectMapper.writeValueAsString(seatStatus));
+        } catch (Exception e) {
+            // ignore
         }
     }
 }

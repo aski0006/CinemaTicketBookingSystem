@@ -50,6 +50,27 @@ public class OrderController {
         return ResponseEntity.ok(status);
     }
 
+    @GetMapping("/my")
+    public Object getMyOrders(@RequestHeader(name = "Authorization", required = false) String token,
+            @RequestParam(required = false) String status) {
+        if (token == null || !token.startsWith("Bearer ")) {
+            return List.of();
+        }
+        token = token.substring(7);
+        if (!JwtTokenUtils.validateToken(token)) {
+            return List.of();
+        }
+        Long userId = null;
+        try {
+            userId = JwtTokenUtils.getUserFromToken(token).getId();
+        } catch (Exception e) {
+            return List.of();
+        }
+        if (userId == null)
+            return List.of();
+        return orderService.getUserOrders(userId, status);
+    }
+
     private boolean checkJwt(String token) {
         if (token == null || !token.startsWith("Bearer ")) {
             return false;

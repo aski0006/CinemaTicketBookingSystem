@@ -11,6 +11,11 @@ import java.util.Arrays;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.Map;
 import jakarta.servlet.http.HttpServletRequest;
+import java.lang.reflect.Method;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+import java.lang.annotation.ElementType;
 
 @Aspect
 @Component
@@ -76,5 +81,32 @@ public class LogAspect {
             }
             throw ex;
         }
+    }
+
+    @Around("execution(* com.asaki0019.cinematicketbookingsystem..*.*(..))")
+    public Object logAround(ProceedingJoinPoint joinPoint) throws Throwable {
+        MethodSignature signature = (MethodSignature) joinPoint.getSignature();
+        Method method = signature.getMethod();
+        if (method.isAnnotationPresent(NotLogInAOP.class)) {
+            // 跳过日志记录
+            return joinPoint.proceed();
+        }
+        // 原有日志逻辑
+        Object result;
+        long start = System.currentTimeMillis();
+        try {
+            result = joinPoint.proceed();
+            return result;
+        } finally {
+            long end = System.currentTimeMillis();
+            // 这里可写入日志实现
+            // System.out.println("[AOP LOG] " + method.getName() + " 执行耗时: " + (end -
+            // start) + "ms");
+        }
+    }
+
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.METHOD)
+    public @interface NotLogInAOP {
     }
 }

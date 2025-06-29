@@ -10,4 +10,5 @@ public class OrderRequest {
     private Long sessionId;
     private List<Long> seatIds;
     private String paymentMethod;
+    private List<List<Integer>> seatPositions;
 }

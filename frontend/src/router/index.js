@@ -7,6 +7,7 @@ import AdminDashboardView from '../views/admin/AdminDashboardView.vue';
 import AdminMovieManageView from '../views/admin/AdminMovieManageView.vue';
 import AdminSessionManageView from '../views/admin/AdminSessionManageView.vue';
 import AdminHallManageView from '../views/admin/AdminHallManageView.vue';
+import UserProfileView from '../views/UserProfileView.vue';
 
 const routes = [
     {
@@ -48,6 +49,11 @@ const routes = [
         path: '/admin/halls',
         name: 'AdminHallManage',
         component: AdminHallManageView,
+    },
+    {
+        path: '/user/profile',
+        name: 'UserProfile',
+        component: UserProfileView,
     },
 ];
 

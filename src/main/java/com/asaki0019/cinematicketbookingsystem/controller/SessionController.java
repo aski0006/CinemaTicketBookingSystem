@@ -1,5 +1,6 @@
 package com.asaki0019.cinematicketbookingsystem.controller;
 
+import com.asaki0019.cinematicketbookingsystem.aop.LogAspect.NotLogInAOP;
 import com.asaki0019.cinematicketbookingsystem.dto.SessionResponseDTO;
 import com.asaki0019.cinematicketbookingsystem.dto.SessionSeatMapDTO;
 import com.asaki0019.cinematicketbookingsystem.entities.Session;
@@ -14,6 +15,8 @@ import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @RestController
 @RequestMapping("/api/sessions")
@@ -34,46 +37,11 @@ public class SessionController {
     }
 
     /**
-     * 获取场次座位图
-     * /api/sessions/{sessionId}/seats
-     * 需要登录校验
+     * 获取场次座位状态（支持Redis场次）
      */
     @GetMapping("/{sessionId}/seats")
-    public Map<String, Object> getSessionSeats(@PathVariable Long sessionId,
-            @RequestHeader(value = "Authorization", required = false) String token) {
-        // 校验JWT
-        if (token == null || !JwtTokenUtils.validateToken(token)) {
-            Map<String, Object> resp = new HashMap<>();
-            resp.put("error", "未登录或token已过期");
-            return resp;
-        }
-        Session session = sessionService.getSessionById(sessionId);
-        if (session == null) {
-            Map<String, Object> resp = new HashMap<>();
-            resp.put("error", "场次不存在");
-            return resp;
-        }
-        List<com.asaki0019.cinematicketbookingsystem.entities.Seat> seats = seatService
-                .getSeatsByHallId(session.getHallId());
-        // 构造分组结构
-        Map<String, List<Map<String, Object>>> rows = new HashMap<>();
-        for (com.asaki0019.cinematicketbookingsystem.entities.Seat seat : seats) {
-            Map<String, Object> seatInfo = new HashMap<>();
-            seatInfo.put("colNo", seat.getColNo());
-            seatInfo.put("status", seat.getStatus());
-            rows.computeIfAbsent(seat.getRowNo(), k -> new java.util.ArrayList<>()).add(seatInfo);
-        }
-        List<Map<String, Object>> rowList = new java.util.ArrayList<>();
-        for (String rowNo : rows.keySet()) {
-            Map<String, Object> row = new HashMap<>();
-            row.put("rowNo", rowNo);
-            row.put("seats", rows.get(rowNo));
-            rowList.add(row);
-        }
-        Map<String, Object> result = new HashMap<>();
-        result.put("sessionId", sessionId);
-        result.put("rows", rowList);
-        return result;
+    public List<List<Map<String, Object>>> getSessionSeats(@PathVariable Long sessionId) {
+        return sessionService.getSessionSeatStatus(sessionId);
     }
 
     @GetMapping("/{sessionId}/seat-map")
@@ -130,7 +98,44 @@ public class SessionController {
      * 获取今日所有场次（优先查Redis）
      */
     @GetMapping("/today")
-    public List<SessionResponseDTO> getTodaySessions(@RequestParam(required = false) Long movieId) {
-        return sessionService.getTodaySessions(movieId);
+    @NotLogInAOP
+    public List<Map<String, Object>> getTodaySessions(@RequestParam(required = false) Long movieId) {
+        return sessionService.getTodaySessionsWithSeatStatus(movieId);
+    }
+
+    /**
+     * 锁定座位（下单时用）
+     * body: [{row: 1, col: 2}, ...]
+     */
+    @PostMapping("/{sessionId}/lock")
+    public Map<String, Object> lockSeats(@PathVariable Long sessionId, @RequestBody List<Map<String, Integer>> seats) {
+        String redisKey = "session_seats:" + sessionId;
+        try {
+            String json = com.asaki0019.cinematicketbookingsystem.utils.RedisCacheUtils.get(redisKey);
+            if (json == null || json.isEmpty())
+                return Map.of("error", "场次不存在");
+            ObjectMapper objectMapper = new ObjectMapper();
+            List<List<Map<String, Object>>> seatStatus = objectMapper.readValue(json, List.class);
+            // 检查并锁定
+            for (Map<String, Integer> seat : seats) {
+                int row = seat.get("row");
+                int col = seat.get("col");
+                Map<String, Object> cell = seatStatus.get(row).get(col);
+                if (cell == null || !"AVAILABLE".equals(cell.get("status"))) {
+                    return Map.of("error", "座位已被占用");
+                }
+            }
+            // 标记为LOCKED
+            for (Map<String, Integer> seat : seats) {
+                int row = seat.get("row");
+                int col = seat.get("col");
+                seatStatus.get(row).get(col).put("status", "LOCKED");
+            }
+            com.asaki0019.cinematicketbookingsystem.utils.RedisCacheUtils.set(redisKey,
+                    objectMapper.writeValueAsString(seatStatus));
+            return Map.of("success", true);
+        } catch (Exception e) {
+            return Map.of("error", "锁定失败");
+        }
     }
 }

@@ -23,4 +23,16 @@ public class OrderSeat {
 
     @Column(name = "final_price")
     private Double finalPrice;
+
+    @Column(name = "row_no")
+    private Integer rowNo; // 座位行号（从Redis二维数组获取）
+
+    @Column(name = "col_no")
+    private Integer colNo; // 座位列号（从Redis二维数组获取）
+
+    @Column(name = "type")
+    private String type; // 座位类型（如普通、情侣、VIP等）
+
+    @Column(name = "price_factor")
+    private Double priceFactor; // 价格系数（如1.0、1.5等）
 }
