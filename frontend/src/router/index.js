@@ -8,6 +8,9 @@ import AdminMovieManageView from '../views/admin/AdminMovieManageView.vue';
 import AdminSessionManageView from '../views/admin/AdminSessionManageView.vue';
 import AdminHallManageView from '../views/admin/AdminHallManageView.vue';
 import UserProfileView from '../views/UserProfileView.vue';
+import AdminOrderManageView from '../views/admin/AdminOrderManageView.vue';
+import AdminUserManageView from '../views/admin/AdminUserManageView.vue';
+import AdminSystemSettingsView from '../views/admin/AdminSystemSettingsView.vue';
 
 const routes = [
     {
@@ -49,6 +52,21 @@ const routes = [
         path: '/admin/halls',
         name: 'AdminHallManage',
         component: AdminHallManageView,
+    },
+    {
+        path: '/admin/orders',
+        name: 'AdminOrderManage',
+        component: AdminOrderManageView,
+    },
+    {
+        path: '/admin/users',
+        name: 'AdminUserManage',
+        component: AdminUserManageView,
+    },
+    {
+        path: '/admin/system-settings',
+        name: 'AdminSystemSettings',
+        component: AdminSystemSettingsView,
     },
     {
         path: '/user/profile',

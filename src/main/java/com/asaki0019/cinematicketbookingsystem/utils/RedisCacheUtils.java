@@ -1007,4 +1007,23 @@ public class RedisCacheUtils {
             }
         }).start();
     }
+
+    /**
+     * 获取所有匹配的key（仅支持单机/哨兵模式，集群慎用）
+     * 
+     * @param pattern 通配符表达式，如"session_seats:*"
+     * @return 匹配的key集合
+     */
+    public static Set<String> keys(String pattern) {
+        if (isCluster) {
+            throw new UnsupportedOperationException("集群模式不支持keys操作");
+        } else {
+            try (Jedis jedis = getJedis()) {
+                return jedis.keys(pattern);
+            } catch (Exception e) {
+                logger.error("[Redis] keys error: {}", e.getMessage(), e);
+                throw new JedisException(e);
+            }
+        }
+    }
 }

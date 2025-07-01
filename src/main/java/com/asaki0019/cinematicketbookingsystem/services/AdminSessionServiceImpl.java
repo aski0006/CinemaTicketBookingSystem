@@ -26,6 +26,7 @@ import java.time.LocalTime;
 import com.asaki0019.cinematicketbookingsystem.repository.HallRepository;
 import com.asaki0019.cinematicketbookingsystem.dto.SessionResponseDTO;
 import com.asaki0019.cinematicketbookingsystem.entities.Hall;
+import com.asaki0019.cinematicketbookingsystem.aop.LogAspect.NotLogInAOP;
 import com.asaki0019.cinematicketbookingsystem.dto.HallInfoDTO;
 import com.asaki0019.cinematicketbookingsystem.utils.RedisCacheUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -348,6 +349,7 @@ public class AdminSessionServiceImpl implements AdminSessionService {
     /**
      * 获取今日所有场次（优先从Redis拉取自动排片数据）
      */
+    @NotLogInAOP
     public List<SessionResponseDTO> getTodaySessions() {
         LocalDate today = LocalDate.now();
         String redisKey = "auto_sessions:" + today.toString().replace("-", "");

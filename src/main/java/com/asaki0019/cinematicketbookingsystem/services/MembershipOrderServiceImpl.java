@@ -161,17 +161,27 @@ public class MembershipOrderServiceImpl implements MembershipOrderService {
 
     @Override
     public Page<MembershipOrderQueryResponseDTO> queryMembershipOrders(Long userId, Pageable pageable) {
-        Page<MembershipOrder> page = membershipOrderRepository.findByUserId(userId, pageable);
+        Page<MembershipOrder> page;
+        if (userId == null) {
+            // 管理员查全部
+            page = membershipOrderRepository.findAll(pageable);
+        } else {
+            // 普通用户查自己
+            page = membershipOrderRepository.findByUserId(userId, pageable);
+        }
         return page.map(this::toQueryResponseDTO);
     }
 
     private MembershipOrderQueryResponseDTO toQueryResponseDTO(MembershipOrder order) {
         MembershipOrderQueryResponseDTO dto = new MembershipOrderQueryResponseDTO();
         dto.setOrderId(order.getId());
+        dto.setId(order.getId());
+        dto.setUserId(order.getUserId());
         dto.setOrderNo(order.getOrderNo());
         dto.setMembershipType(order.getMembershipType());
         dto.setDuration(order.getDuration());
         dto.setTotalAmount(order.getTotalAmount());
+        dto.setAmount(order.getTotalAmount());
         dto.setStatus(order.getStatus());
         dto.setCreateTime(order.getCreateTime());
         dto.setPaymentTime(order.getPaymentTime());

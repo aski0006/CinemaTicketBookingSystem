@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // 创建 Axios 实例
 const service = axios.create({
-    baseURL: import.meta.env.VITE_USE_MOCK === 'true' ? '/' : 'http://localhost:8080', // API 的 base_url
+    baseURL: import.meta.env.VITE_USE_MOCK === 'true' ? 'http://localhost:8080' : 'http://z369632e.natappfree.cc', // API 的 base_url
     timeout: 5000 // 请求超时时间
 });
 

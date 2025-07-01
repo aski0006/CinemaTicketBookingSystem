@@ -42,6 +42,18 @@ CREATE TABLE IF NOT EXISTS hall (
     screen_type VARCHAR(50)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- 座位表
+CREATE TABLE IF NOT EXISTS `seat` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `col_no` int DEFAULT NULL,
+  `hall_id` bigint DEFAULT NULL,
+  `price_factor` double DEFAULT NULL,
+  `row_no` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `status` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `type` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- 场次表
 CREATE TABLE IF NOT EXISTS session (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,

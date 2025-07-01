@@ -35,4 +35,7 @@ public class OrderSeat {
 
     @Column(name = "price_factor")
     private Double priceFactor; // 价格系数（如1.0、1.5等）
+
+    @Column(name = "status")
+    private String status; // 座位订单状态，如FINISHI、FAILED等
 }

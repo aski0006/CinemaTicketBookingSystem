@@ -16,12 +16,20 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.lang.annotation.ElementType;
+import com.asaki0019.cinematicketbookingsystem.services.OrderServiceImpl;
+import com.asaki0019.cinematicketbookingsystem.entities.Order;
+import com.asaki0019.cinematicketbookingsystem.entities.PaymentCallbackRequest;
+import org.aspectj.lang.annotation.AfterReturning;
+import org.springframework.beans.factory.annotation.Autowired;
 
 @Aspect
 @Component
 public class LogAspect {
     private static final Map<String, Long> sessionLogTimeMap = new ConcurrentHashMap<>();
     private static final long LOG_INTERVAL_MS = 120_000; // 120秒
+
+    @Autowired
+    private OrderServiceImpl orderService;
 
     // 切入点：controller和service包下所有public方法
     @Pointcut("execution(public * com.asaki0019.cinematicketbookingsystem.controller..*(..)) || " +
@@ -32,6 +40,10 @@ public class LogAspect {
     @Around("logPointcut()")
     public Object around(ProceedingJoinPoint joinPoint) throws Throwable {
         MethodSignature signature = (MethodSignature) joinPoint.getSignature();
+        Method method = signature.getMethod();
+        if (method.isAnnotationPresent(NotLogInAOP.class)) {
+            return joinPoint.proceed();
+        }
         String className = signature.getDeclaringTypeName();
         String methodName = signature.getName();
         Object[] args = joinPoint.getArgs();
@@ -87,8 +99,9 @@ public class LogAspect {
     public Object logAround(ProceedingJoinPoint joinPoint) throws Throwable {
         MethodSignature signature = (MethodSignature) joinPoint.getSignature();
         Method method = signature.getMethod();
+        // 修正注解名和类型
         if (method.isAnnotationPresent(NotLogInAOP.class)) {
-            // 跳过日志记录
+            System.out.println(method.getName() + " 被跳过AOP日志记录");
             return joinPoint.proceed();
         }
         // 原有日志逻辑
@@ -100,13 +113,25 @@ public class LogAspect {
         } finally {
             long end = System.currentTimeMillis();
             // 这里可写入日志实现
-            // System.out.println("[AOP LOG] " + method.getName() + " 执行耗时: " + (end -
-            // start) + "ms");
+            System.out.println("[AOP LOG] " + method.getName() + " 执行耗时: " + (end - start) + "ms");
         }
     }
 
-    @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.METHOD)
+    @Retention(RetentionPolicy.RUNTIME)
     public @interface NotLogInAOP {
+    }
+
+    // 新增：支付回调后自动更新OrderSeat状态
+    @AfterReturning(pointcut = "execution(* com.asaki0019.cinematicketbookingsystem.services.OrderServiceImpl.processPaymentCallback(..)) && args(callbackRequest)", argNames = "callbackRequest")
+    public void afterProcessPaymentCallback(PaymentCallbackRequest callbackRequest) {
+        try {
+            Order order = orderService.getOrderRepository().findByOrderNo(callbackRequest.getOrderNo());
+            if (order != null) {
+                orderService.updateOrderSeatStatusAndLog(order, callbackRequest.getPaymentStatus());
+            }
+        } catch (Exception e) {
+            LogSystem.error("[AOP afterProcessPaymentCallback] 自动更新OrderSeat状态异常: " + e.getMessage());
+        }
     }
 }

@@ -4,6 +4,8 @@ import com.asaki0019.cinematicketbookingsystem.dto.RefundRequestDTO;
 import com.asaki0019.cinematicketbookingsystem.entities.Order;
 import com.asaki0019.cinematicketbookingsystem.services.AdminOrderService;
 import com.asaki0019.cinematicketbookingsystem.utils.JwtTokenUtils;
+import com.asaki0019.cinematicketbookingsystem.utils.LogSystem;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -20,7 +22,11 @@ public class AdminOrderController {
     private AdminOrderService adminOrderService;
 
     private boolean checkJwt(String token) {
-        return token != null && JwtTokenUtils.validateToken(token);
+        if (token == null || !token.startsWith("Bearer ")) {
+            return false;
+        }
+        token = token.substring(7);
+        return JwtTokenUtils.validateToken(token);
     }
 
     /**

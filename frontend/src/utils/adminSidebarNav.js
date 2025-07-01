@@ -10,11 +10,11 @@ export function handleAdminSidebarNav(router, item, setActiveSidebar) {
     } else if (item.label === '场次管理') {
         router.push('/admin/sessions');
     } else if (item.label === '订单管理') {
-        // 可扩展
+        router.push('/admin/orders');
     } else if (item.label === '用户管理') {
-        // 可扩展
+        router.push('/admin/users');
     } else if (item.label === '系统设置') {
-        // 可扩展
+        router.push('/admin/system-settings');
     } else if (item.label === '影厅管理') {
         router.push('/admin/halls');
     }

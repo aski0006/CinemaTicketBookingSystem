@@ -17,4 +17,7 @@ public class MembershipOrderQueryResponseDTO {
     private Double refundAmount;
     private String refundStatus;
     private LocalDateTime refundTime;
+    private Long id;
+    private Long userId;
+    private Double amount;
 }

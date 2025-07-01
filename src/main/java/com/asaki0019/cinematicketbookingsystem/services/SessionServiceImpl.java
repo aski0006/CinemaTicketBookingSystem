@@ -19,6 +19,7 @@ import com.asaki0019.cinematicketbookingsystem.entities.Seat;
 import com.asaki0019.cinematicketbookingsystem.repository.OrderRepository;
 import com.asaki0019.cinematicketbookingsystem.repository.OrderSeatRepository;
 import com.asaki0019.cinematicketbookingsystem.repository.SeatRepository;
+import com.asaki0019.cinematicketbookingsystem.aop.LogAspect.NotLogInAOP;
 import com.asaki0019.cinematicketbookingsystem.dto.HallInfoDTO;
 import com.asaki0019.cinematicketbookingsystem.dto.SeatDTO;
 import com.asaki0019.cinematicketbookingsystem.dto.SessionResponseDTO;
@@ -169,6 +170,7 @@ public class SessionServiceImpl implements SessionService {
     }
 
     // 新增：带座位状态统计的今日场次
+    @NotLogInAOP
     public List<Map<String, Object>> getTodaySessionsWithSeatStatus(Long movieId) {
         LocalDate today = LocalDate.now();
         String redisKey = "auto_sessions:" + today.toString().replace("-", "");

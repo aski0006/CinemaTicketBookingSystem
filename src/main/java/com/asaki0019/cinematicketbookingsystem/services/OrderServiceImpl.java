@@ -9,19 +9,27 @@ import com.asaki0019.cinematicketbookingsystem.utils.PaymentGatewayUtils;
 import com.asaki0019.cinematicketbookingsystem.utils.RedisCacheUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.asaki0019.cinematicketbookingsystem.utils.JwtTokenUtils;
+import com.asaki0019.cinematicketbookingsystem.utils.LogSystem;
+
 import org.springframework.util.StringUtils;
 import jakarta.servlet.http.HttpServletRequest;
 
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.context.annotation.Lazy;
 
 @Service
+@Lazy(false)
 public class OrderServiceImpl implements OrderService {
 
     @Autowired
@@ -75,25 +83,113 @@ public class OrderServiceImpl implements OrderService {
         if (orderRequest == null || orderRequest.getSessionId() == null
                 || orderRequest.getSeatPositions() == null || orderRequest.getSeatPositions().isEmpty()
                 || orderRequest.getPaymentMethod() == null) {
+            LogSystem.error("[createOrder] 订单参数不合法: " + orderRequest);
             throw new IllegalArgumentException("订单参数不合法");
         }
         Long sessionId = orderRequest.getSessionId();
         List<List<Integer>> seatPositions = orderRequest.getSeatPositions();
 
-        // 1. 直接查Redis二维座位数组
+        // 1. 从Redis获取场次信息
+        String sessionRedisKey = "auto_sessions:" + java.time.LocalDate.now().toString().replace("-", "");
+        String sessionJson = RedisCacheUtils.get(sessionRedisKey);
+        com.asaki0019.cinematicketbookingsystem.entities.Session sessionEntity = null;
+        if (sessionJson != null && !sessionJson.isEmpty()) {
+            try {
+                List<com.asaki0019.cinematicketbookingsystem.entities.Session> sessions = objectMapper.readValue(
+                        sessionJson,
+                        objectMapper.getTypeFactory().constructCollectionType(List.class,
+                                com.asaki0019.cinematicketbookingsystem.entities.Session.class));
+                for (com.asaki0019.cinematicketbookingsystem.entities.Session s : sessions) {
+                    if (s.getId() != null && Math.abs(s.getId()) == Math.abs(sessionId)) {
+                        sessionEntity = s;
+                        break;
+                    }
+                }
+                LogSystem.info("[createOrder] 从Redis获取到场次信息: " + sessionEntity);
+            } catch (Exception e) {
+                LogSystem.error("[createOrder] 解析Redis场次信息失败: " + e.getMessage());
+            }
+        }
+        if (sessionEntity == null) {
+            LogSystem.error("[createOrder] Redis中未找到场次信息, sessionId=" + sessionId);
+            throw new RuntimeException("场次信息不存在");
+        }
+        // 写入Session表（如不存在则插入）
+        com.asaki0019.cinematicketbookingsystem.entities.Session dbSession = null;
+        if (sessionEntity.getId() == null || sessionEntity.getId() < 0) {
+            // 负数或null，说明是Redis临时数据，需新建Session
+            com.asaki0019.cinematicketbookingsystem.entities.Session newSession = new com.asaki0019.cinematicketbookingsystem.entities.Session();
+            newSession.setMovieId(sessionEntity.getMovieId());
+            newSession.setHallId(sessionEntity.getHallId());
+            newSession.setStartTime(sessionEntity.getStartTime());
+            newSession.setEndTime(sessionEntity.getEndTime());
+            newSession.setPrice(sessionEntity.getPrice());
+            newSession.setAvailableSeats(sessionEntity.getAvailableSeats());
+            dbSession = sessionRepository.saveAndFlush(newSession);
+            LogSystem.info("[createOrder] 新增Session入库: " + dbSession);
+        } else {
+            dbSession = sessionRepository.findById(sessionEntity.getId()).orElse(null);
+            if (dbSession == null) {
+                dbSession = sessionRepository.saveAndFlush(sessionEntity);
+                LogSystem.info("[createOrder] 新增Session入库: " + dbSession);
+            } else {
+                LogSystem.info("[createOrder] Session已存在: " + dbSession);
+            }
+        }
+
+        // 2. 从Redis获取座位信息
         String redisKey = "session_seats:" + sessionId;
         String json = RedisCacheUtils.get(redisKey);
         if (json == null || json.isEmpty()) {
+            LogSystem.error("[createOrder] Redis中未找到座位信息: " + redisKey);
             throw new RuntimeException("场次座位信息不存在");
         }
         List<List<Map<String, Object>>> seatStatus;
         try {
             seatStatus = objectMapper.readValue(json, List.class);
+            LogSystem.info("[createOrder] 从Redis获取到座位二维数组");
         } catch (Exception e) {
+            LogSystem.error("[createOrder] 解析座位信息失败: " + e.getMessage());
             throw new RuntimeException("座位信息解析失败");
         }
+        // 写入Seat表（如不存在则插入）
+        for (int row = 0; row < seatStatus.size(); row++) {
+            List<Map<String, Object>> rowList = seatStatus.get(row);
+            for (int col = 0; col < rowList.size(); col++) {
+                Map<String, Object> cell = rowList.get(col);
+                if (cell != null && cell.get("type") != null && !"NULL".equals(cell.get("type"))) {
+                    Long hallId = dbSession.getHallId();
+                    String type = cell.get("type").toString();
+                    Double priceFactor = cell.get("priceFactor") != null
+                            ? Double.parseDouble(cell.get("priceFactor").toString())
+                            : 1.0;
+                    String rowNo = String.valueOf(row);
+                    Integer colNo = col;
+                    // 查找是否已存在
+                    List<Seat> exist = seatRepository.findByHallId(hallId);
+                    boolean found = false;
+                    for (Seat s : exist) {
+                        if (s.getRowNo().equals(rowNo) && s.getColNo().equals(colNo)) {
+                            found = true;
+                            break;
+                        }
+                    }
+                    if (!found) {
+                        Seat seat = new Seat();
+                        seat.setHallId(hallId);
+                        seat.setRowNo(rowNo);
+                        seat.setColNo(colNo);
+                        seat.setType(type);
+                        seat.setPriceFactor(priceFactor);
+                        seat.setStatus("AVAILABLE");
+                        seatRepository.save(seat);
+                        LogSystem.info("[createOrder] 新增Seat入库: " + seat);
+                    }
+                }
+            }
+        }
 
-        // 2. 校验所有选中座位当前状态为AVAILABLE，否则返回友好错误
+        // 3. 校验所有选中座位当前状态为AVAILABLE，否则返回友好错误
         List<List<Integer>> unavailableSeats = new ArrayList<>();
         for (List<Integer> pos : seatPositions) {
             int row = pos.get(0), col = pos.get(1);
@@ -107,10 +203,10 @@ public class OrderServiceImpl implements OrderService {
             }
         }
         if (!unavailableSeats.isEmpty()) {
-            System.out.println("[ERROR] 不可用座位: " + unavailableSeats + ", seatStatus结构=" + seatStatus);
+            LogSystem.error("[createOrder] 部分座位已被锁定或占用: " + unavailableSeats);
             throw new RuntimeException("部分座位已被锁定或占用，请重新选择: " + unavailableSeats);
         }
-        // 3. 校验通过后，统一将这些座位全部标记为LOCKED
+        // 4. 校验通过后，统一将这些座位全部标记为LOCKED
         double totalAmount = 0;
         List<Map<String, Object>> lockedSeats = new ArrayList<>();
         for (List<Integer> pos : seatPositions) {
@@ -127,15 +223,17 @@ public class OrderServiceImpl implements OrderService {
                     "type", cell.get("type"),
                     "priceFactor", priceFactor));
         }
-        // 4. 写回Redis，锁定15分钟
+        // 5. 写回Redis，锁定15分钟
         try {
             RedisCacheUtils.set(redisKey, objectMapper.writeValueAsString(seatStatus), 15 * 60);
+            LogSystem.info("[createOrder] 已写回Redis锁定座位");
         } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
+            LogSystem.error("[createOrder] 座位锁定写入Redis失败: " + e.getMessage());
             throw new RuntimeException("座位锁定写入Redis失败", e);
         }
 
         try {
-            // 5. 创建订单（Order表/OrderSeat表如需）
+            // 6. 创建订单（Order表/OrderSeat表如需）
             Order newOrder = new Order();
             // 优先用OrderRequest的userId，如果为null则从JWT解析
             Long userId = orderRequest.getUserId();
@@ -154,7 +252,7 @@ public class OrderServiceImpl implements OrderService {
                 }
             }
             newOrder.setUserId(userId);
-            newOrder.setSessionId(sessionId);
+            newOrder.setSessionId(dbSession.getId()); // 使用数据库表中的SessionID
             newOrder.setPaymentMethod(orderRequest.getPaymentMethod());
             newOrder.setOrderNo(UUID.randomUUID().toString());
             newOrder.setStatus("PENDING_PAYMENT");
@@ -162,7 +260,7 @@ public class OrderServiceImpl implements OrderService {
             newOrder.setTotalAmount(totalAmount);
             // 先写入数据库
             newOrder = orderRepository.saveAndFlush(newOrder);
-            System.out.println(newOrder);
+            LogSystem.info("[createOrder] 新增Order入库: " + newOrder);
             // 如需存OrderSeat，存row/col/type/priceFactor
             for (Map<String, Object> seat : lockedSeats) {
                 OrderSeat os = new OrderSeat();
@@ -171,15 +269,18 @@ public class OrderServiceImpl implements OrderService {
                 os.setColNo((Integer) seat.get("col"));
                 os.setType(seat.get("type").toString());
                 os.setPriceFactor(Double.parseDouble(seat.get("priceFactor").toString()));
-                os.setFinalPrice(50.0 * os.getPriceFactor()); // 可选：存最终价格
+                os.setFinalPrice(50.0 * os.getPriceFactor());
+                os.setStatus("PENDING");
                 orderSeatRepository.save(os);
+                LogSystem.info("[createOrder] 新增OrderSeat入库: " + os);
             }
 
-            // 6. 缓存订单、调用支付网关、返回payUrl等
+            // 7. 缓存订单、调用支付网关、返回payUrl等
             try {
                 String orderJson = objectMapper.writeValueAsString(newOrder);
                 RedisCacheUtils.set("order:" + newOrder.getOrderNo(), orderJson, 15 * 60);
             } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
+                LogSystem.error("[createOrder] 订单缓存失败: " + e.getMessage());
                 throw new RuntimeException("订单缓存失败", e);
             }
             Map<String, String> extraParams = new HashMap<>();
@@ -189,7 +290,7 @@ public class OrderServiceImpl implements OrderService {
                     newOrder.getOrderNo(),
                     totalAmount,
                     "电影票购买",
-                    "场次ID:" + sessionId,
+                    "场次ID:" + dbSession.getId(),
                     callbackUrl,
                     extraParams);
 
@@ -199,6 +300,7 @@ public class OrderServiceImpl implements OrderService {
             result.put("total_amount", totalAmount);
             result.put("payUrl", paymentResult.get("payUrl"));
             result.put("e_ticket_url", "http://example.com/eticket/" + newOrder.getOrderNo());
+            LogSystem.info("[createOrder] 订单创建流程完成: " + result);
             return result;
         } catch (Exception ex) {
             // 恢复本次锁定的座位状态为AVAILABLE
@@ -213,6 +315,7 @@ public class OrderServiceImpl implements OrderService {
                 RedisCacheUtils.set(redisKey, objectMapper.writeValueAsString(seatStatus), 15 * 60);
             } catch (Exception ignore) {
             }
+            LogSystem.error("[createOrder] 订单创建异常: " + ex.getMessage());
             throw ex;
         }
     }
@@ -284,60 +387,119 @@ public class OrderServiceImpl implements OrderService {
         return new PaymentStatusDTO(order.getOrderNo(), order.getStatus(), order.getUpdatedAt());
     }
 
+    /**
+     * 统一处理OrderSeat状态变更和日志
+     */
+    public void updateOrderSeatStatusAndLog(Order order, String status) {
+        String statusUpper = status != null ? status.toUpperCase() : "";
+        List<OrderSeat> orderSeats = orderSeatRepository.findByOrderId(order.getId());
+        LogSystem.info("[updateOrderSeatStatusAndLog] 订单" + order.getOrderNo() + "，回调状态=" + statusUpper + "，涉及座位数="
+                + orderSeats.size());
+        boolean needUpdateRedis = false;
+        List<Integer> updatedRows = new ArrayList<>();
+        List<Integer> updatedCols = new ArrayList<>();
+        for (OrderSeat os : orderSeats) {
+            String before = os.getStatus();
+            if ("SUCCESS".equals(statusUpper) || "TRADE_SUCCESS".equals(statusUpper) || "COMPLETED".equals(statusUpper)
+                    || "FINISH".equals(statusUpper)) {
+                os.setStatus("OCCUPIED");
+                needUpdateRedis = true;
+                updatedRows.add(os.getRowNo());
+                updatedCols.add(os.getColNo());
+            } else if ("PENDING_PAYMENT".equals(statusUpper)) {
+                os.setStatus("PENDING");
+            } else {
+                os.setStatus("FAILED");
+            }
+            LogSystem.info("[updateOrderSeatStatusAndLog] OrderSeat id=" + os.getId() + " 状态: " + before + " -> "
+                    + os.getStatus());
+        }
+        orderSeatRepository.saveAll(orderSeats);
+        orderSeatRepository.flush();
+        for (OrderSeat os : orderSeats) {
+            LogSystem.info("[updateOrderSeatStatusAndLog] OrderSeat id=" + os.getId() + " 最终状态=" + os.getStatus());
+        }
+        // 支付成功时同步写回Redis缓存
+        if (needUpdateRedis) {
+            String redisKey = "session_seats:" + order.getSessionId();
+            String json = RedisCacheUtils.get(redisKey);
+            LogSystem.info("[updateOrderSeatStatusAndLog] 尝试同步Redis缓存: key=" + redisKey + ", json为空? "
+                    + (json == null || json.isEmpty()));
+            if (json != null && !json.isEmpty()) {
+                try {
+                    List<List<Map<String, Object>>> seatStatus = objectMapper.readValue(json, List.class);
+                    for (int i = 0; i < updatedRows.size(); i++) {
+                        int row = updatedRows.get(i);
+                        int col = updatedCols.get(i);
+                        // 若row为String，需转int
+                        if (row < 0 || col < 0 || row >= seatStatus.size() || col >= seatStatus.get(row).size()) {
+                            LogSystem.error("[updateOrderSeatStatusAndLog] row/col越界: row=" + row + ", col=" + col);
+                            continue;
+                        }
+                        Map<String, Object> cell = seatStatus.get(row).get(col);
+                        if (cell != null && !"NULL".equals(cell.get("type"))) {
+                            cell.put("status", "OCCUPIED");
+                            LogSystem.info("[updateOrderSeatStatusAndLog] Redis座位状态同步: row=" + row + ", col=" + col
+                                    + " -> OCCUPIED");
+                        } else {
+                            LogSystem.error("[updateOrderSeatStatusAndLog] Redis cell为空或type=NULL: row=" + row
+                                    + ", col=" + col);
+                        }
+                    }
+                    RedisCacheUtils.set(redisKey, objectMapper.writeValueAsString(seatStatus));
+                    LogSystem.info("[updateOrderSeatStatusAndLog] Redis缓存已同步OCCUPIED状态");
+                } catch (Exception e) {
+                    LogSystem.error("[updateOrderSeatStatusAndLog] Redis同步座位状态异常: " + e.getMessage());
+                }
+            } else {
+                LogSystem.error("[updateOrderSeatStatusAndLog] Redis缓存不存在或已过期: key=" + redisKey);
+            }
+        }
+    }
+
     @Override
     @Transactional
     public void handlePaymentCallback(String orderNo, String status, String transactionId, double amount) {
         Order order = orderRepository.findByOrderNo(orderNo);
         if (order == null) {
+            LogSystem.error("[handlePaymentCallback] 订单不存在: " + orderNo);
             throw new RuntimeException("订单不存在");
         }
         String redisKey = "session_seats:" + order.getSessionId();
         String json = RedisCacheUtils.get(redisKey);
-        if (json == null || json.isEmpty())
+        if (json == null || json.isEmpty()) {
+            LogSystem.warn("[handlePaymentCallback] Redis中未找到座位信息: " + redisKey);
             return;
+        }
         List<List<Map<String, Object>>> seatStatus;
         try {
             seatStatus = objectMapper.readValue(json, List.class);
         } catch (Exception e) {
+            LogSystem.error("[handlePaymentCallback] 解析座位信息失败: " + e.getMessage());
             return;
         }
-        // 取出订单的所有row/col
-        List<OrderSeat> orderSeats = orderSeatRepository.findByOrderId(order.getId());
-        for (OrderSeat os : orderSeats) {
-            int row = os.getRowNo();
-            int col = os.getColNo();
-            if ("SUCCESS".equals(status)) {
-                // 修改为OCCUPIED
-                Map<String, Object> cell = seatStatus.get(row).get(col);
-                if (cell != null && !"NULL".equals(cell.get("type"))) {
-                    cell.put("status", "OCCUPIED");
-                }
-            } else {
-                // 支付失败恢复为AVAILABLE
-                Map<String, Object> cell = seatStatus.get(row).get(col);
-                if (cell != null && !"NULL".equals(cell.get("type"))) {
-                    cell.put("status", "AVAILABLE");
-                }
-            }
-        }
+        updateOrderSeatStatusAndLog(order, status);
         try {
             RedisCacheUtils.set(redisKey, objectMapper.writeValueAsString(seatStatus));
         } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
-            // ignore
+            LogSystem.error("[handlePaymentCallback] Redis写入失败: " + e.getMessage());
         }
         // 订单状态更新
-        String statusUpper = status != null ? status.toUpperCase() : "";
-        if ("SUCCESS".equals(statusUpper) || "TRADE_SUCCESS".equals(statusUpper) || "COMPLETED".equals(statusUpper)
-                || "FINISH".equals(statusUpper)) {
-            order.setStatus("FINISH");
+        String beforeOrderStatus = order.getStatus();
+        if ("SUCCESS".equals(status) || "TRADE_SUCCESS".equals(status) || "COMPLETED".equals(status)
+                || "FINISH".equals(status)) {
+            order.setStatus("COMPLETED");
             order.setPaymentTime(LocalDateTime.now());
-            // 生成电子票等
             String eTicketUrl = generateETicket(order);
             order.setETicketUrl(eTicketUrl);
+        } else if ("PENDING_PAYMENT".equals(status)) {
+            order.setStatus("PENDING_PAYMENT");
         } else {
             order.setStatus("PAYMENT_FAILED");
         }
         orderRepository.save(order);
+        LogSystem.info(
+                "[handlePaymentCallback] Order " + orderNo + " 状态: " + beforeOrderStatus + " -> " + order.getStatus());
     }
 
     @Override
@@ -420,5 +582,47 @@ public class OrderServiceImpl implements OrderService {
         result.put("sessionId", order.getSessionId());
         result.put("paymentTime", order.getPaymentTime());
         return result;
+    }
+
+    /**
+     * 定时任务：每分钟检查所有session_seats:，将超时未支付的LOCKED座位恢复为AVAILABLE
+     */
+    @Scheduled(cron = "0 */1 * * * ?")
+    public void unlockExpiredLockedSeats() {
+        try {
+            Set<String> keys = RedisCacheUtils.keys("session_seats:*");
+            for (String redisKey : keys) {
+                String json = RedisCacheUtils.get(redisKey);
+                if (json == null || json.isEmpty())
+                    continue;
+                List<List<Map<String, Object>>> seatStatus;
+                try {
+                    seatStatus = objectMapper.readValue(json, List.class);
+                } catch (Exception e) {
+                    continue;
+                }
+                boolean changed = false;
+                for (List<Map<String, Object>> row : seatStatus) {
+                    for (Map<String, Object> cell : row) {
+                        if (cell != null && "LOCKED".equals(cell.get("status"))) {
+                            cell.put("status", "AVAILABLE");
+                            changed = true;
+                        }
+                    }
+                }
+                if (changed) {
+                    try {
+                        RedisCacheUtils.set(redisKey, objectMapper.writeValueAsString(seatStatus));
+                    } catch (Exception ignore) {
+                    }
+                }
+            }
+        } catch (Exception e) {
+            // ignore
+        }
+    }
+
+    public OrderRepository getOrderRepository() {
+        return this.orderRepository;
     }
 }

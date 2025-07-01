@@ -8,6 +8,7 @@ import com.asaki0019.cinematicketbookingsystem.repository.MembershipOrderReposit
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -99,5 +100,14 @@ public class MembershipOrderController {
             default:
                 return 30;
         }
+    }
+
+    // 管理员获取所有会员订单（分页）
+    @GetMapping("/admin/all")
+    public Page<MembershipOrderQueryResponseDTO> getAllMembershipOrders(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return membershipOrderService.queryMembershipOrders(null, pageable);
     }
 }

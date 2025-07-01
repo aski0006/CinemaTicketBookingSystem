@@ -22,31 +22,43 @@
         <div class="dashboard-grid">
           <!-- Metrics Cards -->
           <div class="metrics-row">
-            <div class="metrics-card" v-for="metric in metrics" :key="metric.label">
-              <div class="metrics-icon" :style="{color: metric.color}"><i :class="metric.icon"></i></div>
-              <div class="metrics-value">{{ metric.value }}</div>
-              <div class="metrics-label">{{ metric.label }}</div>
+            <div class="metrics-card">
+              <div class="metrics-icon" style="color:#52c41a"><i class="el-icon-user"></i></div>
+              <div class="metrics-value">{{ userCount }}</div>
+              <div class="metrics-label">用户总数</div>
+            </div>
+            <div class="metrics-card">
+              <div class="metrics-icon" style="color:#1890ff"><i class="el-icon-money"></i></div>
+              <div class="metrics-value">¥{{ orderAmount }}</div>
+              <div class="metrics-label">总订单金额</div>
+            </div>
+            <div class="metrics-card">
+              <div class="metrics-icon" style="color:#FF7D00"><i class="el-icon-tickets"></i></div>
+              <div class="metrics-value">{{ orderCount }}</div>
+              <div class="metrics-label">订单总数</div>
+            </div>
+            <div class="metrics-card">
+              <div class="metrics-icon" style="color:#f5222d"><i class="el-icon-warning"></i></div>
+              <div class="metrics-value">{{ refundedCount }}</div>
+              <div class="metrics-label">已退款订单</div>
             </div>
           </div>
           <!-- Chart Cards -->
           <div class="chart-row">
             <div class="chart-card">
               <div class="chart-header">
-                <span>票房趋势</span>
-                <el-button type="text" class="chart-action">查看更多<i class="el-icon-arrow-right"></i></el-button>
+                <span>用户与订单趋势</span>
               </div>
               <div class="chart-body">
-                <!-- 这里可集成ECharts等图表库，暂用占位 -->
-                <div class="chart-placeholder">[Line Chart]</div>
+                <div id="dashboard-main-chart" style="height:320px;width:100%"></div>
               </div>
             </div>
             <div class="chart-card">
               <div class="chart-header">
-                <span>类型占比</span>
-                <el-button type="text" class="chart-action">查看更多<i class="el-icon-arrow-right"></i></el-button>
+                <span>订单类型占比</span>
               </div>
               <div class="chart-body">
-                <div class="chart-placeholder">[Pie Chart]</div>
+                <div id="dashboard-pie-chart" style="height:320px;width:100%"></div>
               </div>
             </div>
           </div>
@@ -75,30 +87,128 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import AdminSidebar from '../../components/AdminSidebar.vue';
 import { handleAdminSidebarNav, sidebarItems } from '@/utils/adminSidebarNav';
-const topNavItems = ["仪表盘", "数据可视化", "异常页", "个人中心"];
+import * as echarts from 'echarts';
+import service from '../../api/request';
+
+const topNavItems = ["仪表盘"];
 const activeTopNav = ref(topNavItems[0]);
 const activeSidebar = ref('总览');
 const sidebarCollapsed = ref(false);
 const router = useRouter();
-const metrics = [
-  { label: "今日票房", value: "¥12,800", icon: "el-icon-money", color: "#1890ff" },
-  { label: "今日订单", value: "320", icon: "el-icon-tickets", color: "#FF7D00" },
-  { label: "新增用户", value: "56", icon: "el-icon-user", color: "#52c41a" },
-  { label: "待处理退款", value: "3", icon: "el-icon-warning", color: "#f5222d" }
-];
-const tableData = [
-  { rank: 1, title: "封神第一部", views: 12000, growth: 320 },
-  { rank: 2, title: "消失的她", views: 9800, growth: 210 },
-  { rank: 3, title: "八角笼中", views: 8700, growth: 180 },
-  { rank: 4, title: "孤注一掷", views: 7600, growth: 150 }
-];
+
+const userCount = ref(0);
+const orderCount = ref(0);
+const orderAmount = ref(0);
+const refundedCount = ref(0);
+const orderTypePie = ref({ ticket: 0, membership: 0 });
+const trendDays = ref([]);
+const userTrend = ref([]);
+const orderTrend = ref([]);
+const tableData = ref([]);
+
 function handleSidebarClick(item) {
   handleAdminSidebarNav(router, item, v => activeSidebar.value = v);
 }
+
+async function fetchDashboardStats() {
+  // 获取用户数
+  const userRes = await service.get('/admin/users', { params: { page: 1, size: 1 } });
+  userCount.value = Number(userRes.total) || (userRes.users || userRes.content || []).length;
+  // 获取购票订单统计
+  const orderRes = await service.get('/admin/orders');
+  const ticketOrders = (orderRes.orders || []);
+  orderCount.value = ticketOrders.length;
+  orderAmount.value = ticketOrders.reduce((sum, o) => sum + (o.totalAmount || o.total_amount || 0), 0);
+  refundedCount.value = ticketOrders.filter(o => o.status === 'REFUNDED').length;
+  orderTypePie.value.ticket = ticketOrders.length;
+  // 获取会员订单（修正：统一用管理员专用接口，兼容新字段）
+  const memberRes = await service.get('/api/memberships/admin/all', { params: { page: 0, size: 1000 } });
+  const memberOrders = (memberRes.content || []).map(o => ({
+    ...o,
+    id: o.id || o.orderId,
+    userId: o.userId,
+    amount: o.amount || o.totalAmount,
+    paymentTime: o.paymentTime || o.payment_time,
+    status: o.status
+  }));
+  orderTypePie.value.membership = memberOrders.length;
+  orderCount.value += memberOrders.length;
+  orderAmount.value += memberOrders.reduce((sum, o) => sum + (o.amount || 0), 0);
+  refundedCount.value += memberOrders.filter(o => o.status === 'REFUNDED').length;
+  // 统计趋势
+  const days = Array.from({length: 30}, (_, i) => {
+    const d = new Date(); d.setDate(d.getDate() - (29-i));
+    return d.toISOString().slice(0,10);
+  });
+  trendDays.value = days;
+  userTrend.value = Array(30).fill(userCount.value); // 简单处理，实际可按天统计注册数
+  const ticketTrend = days.map(day => ticketOrders.filter(o => (o.createTime||o.create_time||'').slice(0,10) === day).length);
+  const memberTrend = days.map(day => memberOrders.filter(o => (o.paymentTime||'').slice(0,10) === day).length);
+  orderTrend.value = ticketTrend.map((v,i) => v + memberTrend[i]);
+  // 获取热度排行
+  try {
+    const hotRes = await service.get('/admin/movies/hot');
+    tableData.value = (hotRes || []).map(item => ({
+      rank: item.rank,
+      title: item.title,
+      views: item.views,
+      growth: '' // 暂无日涨量数据
+    }));
+  } catch (e) {
+    tableData.value = [];
+  }
+  setTimeout(drawCharts, 200);
+}
+
+function drawCharts() {
+  // 主趋势图
+  const mainChart = echarts.init(document.getElementById('dashboard-main-chart'));
+  mainChart.setOption({
+    tooltip: { trigger: 'axis' },
+    legend: { data: ['用户数','订单数'] },
+    xAxis: { type: 'category', data: trendDays.value },
+    yAxis: { type: 'value' },
+    series: [
+      { name: '用户数', type: 'line', data: userTrend.value },
+      { name: '订单数', type: 'bar', data: orderTrend.value }
+    ]
+  });
+  // 饼图
+  const pieChart = echarts.init(document.getElementById('dashboard-pie-chart'));
+  pieChart.setOption({
+    tooltip: { trigger: 'item' },
+    legend: { top: '5%', left: 'center' },
+    series: [
+      {
+        name: '订单类型',
+        type: 'pie',
+        radius: ['40%', '70%'],
+        avoidLabelOverlap: false,
+        itemStyle: { borderRadius: 10, borderColor: '#fff', borderWidth: 2 },
+        label: { show: true, position: 'outside' },
+        emphasis: { label: { show: true, fontSize: 18, fontWeight: 'bold' } },
+        labelLine: { show: true },
+        data: [
+          { value: orderTypePie.value.ticket, name: '购票订单' },
+          { value: orderTypePie.value.membership, name: '会员订单' }
+        ]
+      }
+    ]
+  });
+}
+
+onMounted(() => {
+  fetchDashboardStats();
+  // 监听用户管理页面的用户数变更
+  window.addEventListener('user-count-update', e => {
+    userCount.value = e.detail.total;
+    drawCharts();
+  });
+});
 </script>
 
 <style scoped>
